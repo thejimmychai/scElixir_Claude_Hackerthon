@@ -1,0 +1,62 @@
+{
+  "human": {
+    "n_genes": 21,
+    "ki_condition": "human_AT2_DistalTF_KI",
+    "cos_AT2ref_to_tip": 0.6564,
+    "cos_AT2_KI_to_tip": 0.7631,
+    "delta_proximity": 0.1067,
+    "genes": [
+      "SOX9",
+      "ID2",
+      "ETV5",
+      "TESC",
+      "MYCN",
+      "SOX11",
+      "FGF20",
+      "RNF43",
+      "NKX2-1",
+      "SFTPC",
+      "SFTPB",
+      "SFTPA1",
+      "ABCA3",
+      "LAMP3",
+      "NAPSA",
+      "SLC34A2",
+      "PGC",
+      "POU5F1",
+      "SOX2",
+      "KLF4",
+      "MYC"
+    ]
+  },
+  "mouse": {
+    "n_genes": 21,
+    "ki_condition": "mouse_AT2_DistalTF_KI",
+    "cos_AT2ref_to_tip": 0.7924,
+    "cos_AT2_KI_to_tip": 0.7019,
+    "delta_proximity": -0.0905,
+    "genes": [
+      "SOX9",
+      "ID2",
+      "ETV5",
+      "TESC",
+      "MYCN",
+      "SOX11",
+      "FGF20",
+      "RNF43",
+      "NKX2-1",
+      "SFTPC",
+      "SFTPB",
+      "SFTPA1",
+      "ABCA3",
+      "LAMP3",
+      "NAPSA",
+      "SLC34A2",
+      "PGC",
+      "POU5F1",
+      "SOX2",
+      "KLF4",
+      "MYC"
+    ]
+  }
+}

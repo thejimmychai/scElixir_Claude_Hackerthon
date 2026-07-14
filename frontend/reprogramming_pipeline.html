@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Universal Developmental Reprogramming Pipeline</title>
+<style>
+
+:root{
+  --bg:#0e1116; --panel:#161b22; --panel2:#1c232d; --line:#2a323d;
+  --ink:#e6edf3; --mut:#9aa7b4; --dim:#6b7684;
+  --acc:#4aa8ff; --acc2:#7ee0c0; --warn:#f0b866; --bad:#f0776a;
+  --act:#5ec98a; --ko:#f0776a;
+  --mono:"SFMono-Regular",ui-monospace,Menlo,Consolas,monospace;
+  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+a{color:var(--acc);text-decoration:none} a:hover{text-decoration:underline}
+h1,h2,h3,h4{margin:0;font-weight:600;line-height:1.25}
+.mono{font-family:var(--mono)}
+.wrap{max-width:1400px;margin:0 auto;padding:0 22px}
+header{border-bottom:1px solid var(--line);background:linear-gradient(180deg,#141a22,#0e1116);position:sticky;top:0;z-index:50;backdrop-filter:blur(6px)}
+.hd{display:flex;align-items:center;gap:18px;padding:14px 0}
+.logo{width:42px;height:42px;border-radius:9px;border:1px solid var(--line);background:radial-gradient(120% 120% at 20% 10%,#20303f,#12181f);display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:12px;font-weight:700;color:var(--acc2);letter-spacing:.5px}
+.hd h1{font-size:16px;letter-spacing:.2px}
+.hd .sub{color:var(--mut);font-size:12.5px;margin-top:2px}
+.hd .refcase{margin-left:auto;text-align:right;font-size:11.5px;color:var(--dim);max-width:340px}
+.hd .refcase b{color:var(--acc2);font-weight:600}
+.grid{display:grid;grid-template-columns:290px 1fr;gap:22px;padding:22px 0 70px}
+@media(max-width:1000px){.grid{grid-template-columns:1fr}}
+.side{position:sticky;top:84px;align-self:start;display:flex;flex-direction:column;gap:14px}
+@media(max-width:1000px){.side{position:static}}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.card .ct{padding:12px 15px;border-bottom:1px solid var(--line);font-size:10.5px;text-transform:uppercase;letter-spacing:1.3px;color:var(--dim);font-weight:600}
+.card .cb{padding:14px 15px}
+.field{margin-bottom:13px}.field:last-child{margin-bottom:0}
+.field label{display:block;font-size:10.5px;color:var(--mut);margin-bottom:5px;text-transform:uppercase;letter-spacing:.7px}
+select{width:100%;background:var(--panel2);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:9px 10px;font-family:var(--sans);font-size:13px;cursor:pointer}
+select:focus{outline:none;border-color:var(--acc)}
+select:disabled{opacity:.45;cursor:not-allowed}
+.seg{display:flex;gap:6px}
+.seg button{flex:1;background:var(--panel2);color:var(--mut);border:1px solid var(--line);border-radius:8px;padding:8px;font-size:12.5px;cursor:pointer;font-family:var(--sans)}
+.seg button.on{background:#16324a;border-color:var(--acc);color:var(--ink)}
+.badge{display:inline-flex;align-items:center;gap:5px;font-size:10px;padding:2px 8px;border-radius:20px;font-weight:600;letter-spacing:.4px;text-transform:uppercase}
+.b-impl{background:#12312080;color:var(--act);border:1px solid #2c6b46}
+.b-plan{background:#3a2c1280;color:var(--warn);border:1px solid #6b542c}
+.transition-box{background:var(--panel2);border:1px solid var(--line);border-radius:9px;padding:12px}
+.transition-box .arrow{color:var(--acc);font-size:15px;margin:2px 0;text-align:center;letter-spacing:2px}
+.tb-state{font-family:var(--mono);font-size:13px;color:var(--ink)}
+.tb-lab{font-size:9.5px;color:var(--dim);text-transform:uppercase;letter-spacing:.6px;margin-bottom:2px}
+/* pipeline ribbon */
+.ribbon{display:flex;gap:0;margin-bottom:20px;flex-wrap:wrap}
+.node{flex:1;min-width:150px;position:relative;cursor:pointer;padding:2px}
+.node .inner{background:var(--panel);border:1px solid var(--line);border-radius:11px;padding:12px 13px;height:100%;transition:.15s}
+.node:hover .inner{border-color:#3d4a58}
+.node.on .inner{border-color:var(--acc);background:#14202c;box-shadow:0 0 0 1px var(--acc)}
+.node .stg{font-family:var(--mono);font-size:11px;color:var(--acc);font-weight:700}
+.node.on .stg{color:var(--acc2)}
+.node .tt{font-size:13px;font-weight:600;margin:3px 0 2px}
+.node .ss{font-size:11px;color:var(--dim)}
+.node .cn{display:flex;align-items:center;justify-content:center;color:var(--line);font-size:18px;padding:0 2px}
+@media(max-width:820px){.ribbon{flex-direction:column}.node{min-width:0}}
+/* main content */
+.main .h2{font-size:19px;display:flex;align-items:center;gap:11px;margin-bottom:4px}
+.main .stagenum{font-family:var(--mono);font-size:14px;color:var(--acc2);border:1px solid var(--line);border-radius:7px;padding:3px 9px;background:var(--panel)}
+.goal{color:var(--mut);font-size:14px;margin:10px 0 20px;max-width:900px}
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px}
+@media(max-width:720px){.cols{grid-template-columns:1fr}}
+.io h4{font-size:10.5px;text-transform:uppercase;letter-spacing:1px;color:var(--dim);margin-bottom:8px}
+.io ul{margin:0;padding:0;list-style:none}
+.io li{padding:6px 0 6px 18px;position:relative;font-size:13px;border-bottom:1px solid #1d232c}
+.io li:last-child{border-bottom:none}
+.io li:before{content:"";position:absolute;left:2px;top:12px;width:6px;height:6px;border-radius:2px;background:var(--acc)}
+.io.out li:before{background:var(--acc2);border-radius:50%}
+.io.meth li:before{background:var(--warn);border-radius:0}
+.meta-row{display:flex;gap:10px;flex-wrap:wrap;margin:6px 0 22px;font-size:11.5px;color:var(--dim)}
+.meta-row .m{background:var(--panel);border:1px solid var(--line);border-radius:7px;padding:5px 10px}
+.meta-row .m b{color:var(--mut);font-weight:600}
+.dpanel{background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:hidden;margin-top:8px}
+.dpanel .dh{padding:13px 16px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
+.dpanel .dh h3{font-size:14px}
+.dpanel .dh .tag{font-size:10.5px;color:var(--dim);margin-left:auto}
+.dpanel .db{padding:16px}
+.livewrap{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--act);margin-bottom:2px}
+.livewrap .dot{width:7px;height:7px;border-radius:50%;background:var(--act);box-shadow:0 0 6px var(--act)}
+.plandata{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--warn)}
+.plandata .dot{width:7px;height:7px;border-radius:50%;background:var(--warn)}
+table{width:100%;border-collapse:collapse;font-size:12.5px}
+th{text-align:left;color:var(--dim);font-weight:600;font-size:10.5px;text-transform:uppercase;letter-spacing:.6px;padding:7px 9px;border-bottom:1px solid var(--line)}
+td{padding:7px 9px;border-bottom:1px solid #1b212a;vertical-align:top}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:#171e27}
+.tf{font-family:var(--mono);font-weight:600}
+.pill{display:inline-block;font-size:10px;padding:1px 7px;border-radius:12px;font-weight:600}
+.p-act{background:#12312080;color:var(--act);border:1px solid #2c6b46}
+.p-ko{background:#3a161680;color:var(--ko);border:1px solid #6b2c2c}
+.p-hi{background:#12283f;color:var(--acc);border:1px solid #24486b}
+.p-med{background:#2a2416;color:var(--warn);border:1px solid #5a4c22}
+.p-yes{color:var(--act)} .p-no{color:var(--dim)}
+.bar{height:7px;border-radius:4px;background:#232c37;overflow:hidden;min-width:60px;display:inline-block;vertical-align:middle;width:80px}
+.bar > i{display:block;height:100%;background:linear-gradient(90deg,var(--acc),var(--acc2))}
+.fate{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:720px){.fate{grid-template-columns:1fr}}
+.fatecard{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:15px}
+.fatecard h4{font-size:12px;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.fatebar{margin:9px 0}
+.fatebar .lab{display:flex;justify-content:space-between;font-size:11.5px;margin-bottom:3px;color:var(--mut)}
+.fatebar .track{height:9px;background:#161b22;border-radius:5px;overflow:hidden;border:1px solid var(--line)}
+.fatebar .fill{height:100%;border-radius:5px}
+.delta{font-family:var(--mono);font-weight:700;font-size:15px}
+.delta.pos{color:var(--act)} .delta.neg{color:var(--bad)}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font-family:var(--mono);font-size:11px;background:var(--panel2);border:1px solid var(--line);border-radius:6px;padding:3px 8px;color:var(--mut)}
+.note{background:#161b22;border-left:3px solid var(--warn);padding:11px 14px;border-radius:0 8px 8px 0;font-size:12.5px;color:var(--mut);margin-top:12px}
+.note.acc{border-left-color:var(--acc)}
+.phasebars{display:flex;gap:2px;height:26px;border-radius:6px;overflow:hidden;border:1px solid var(--line);margin:8px 0}
+.phasebars > div{display:flex;align-items:center;justify-content:center;font-size:10px;color:#0e1116;font-weight:700}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:11px;color:var(--mut);margin-top:6px}
+.legend span{display:inline-flex;align-items:center;gap:5px}
+.legend i{width:10px;height:10px;border-radius:2px;display:inline-block}
+.statgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px}
+@media(max-width:720px){.statgrid{grid-template-columns:repeat(2,1fr)}}
+.stat{background:var(--panel2);border:1px solid var(--line);border-radius:9px;padding:12px}
+.stat .v{font-size:20px;font-weight:700;font-family:var(--mono);color:var(--acc2)}
+.stat .l{font-size:10.5px;color:var(--dim);text-transform:uppercase;letter-spacing:.5px;margin-top:2px}
+footer{border-top:1px solid var(--line);color:var(--dim);font-size:11.5px;padding:20px 0 40px}
+footer .wrap{display:flex;gap:20px;flex-wrap:wrap;align-items:center}
+.foot-b{color:var(--mut)}
+.provbtn{margin-left:auto;background:var(--panel);border:1px solid var(--line);color:var(--mut);border-radius:7px;padding:6px 12px;font-size:11.5px;cursor:pointer}
+.provbtn:hover{border-color:var(--acc);color:var(--ink)}
+.hidden{display:none}
+
+</style>
+</head>
+<body>
+
+<header><div class="wrap"><div class="hd">
+  <div class="logo">DRP</div>
+  <div>
+    <h1>Universal Developmental Reprogramming Pipeline</h1>
+    <div class="sub">Atlas → GRN → in-silico reversal → TF combo + small-molecule rejuvenation</div>
+  </div>
+  <div class="refcase">Reference case fully executed:<br><b>Lung · Epithelial · adult AT2 → fetal distal-tip progenitor</b></div>
+</div></div></header>
+
+<div class="wrap"><div class="grid">
+  <!-- SIDEBAR -->
+  <aside class="side">
+    <div class="card"><div class="ct">1 · Select target system</div><div class="cb">
+      <div class="field"><label>Organ</label><select id="selOrgan"></select></div>
+      <div class="field"><label>Cell layer / lineage</label><select id="selLayer"></select></div>
+    </div></div>
+    <div class="card"><div class="ct">2 · Define reversal</div><div class="cb">
+      <div class="field"><label>Source state (adult / mature)</label><select id="selSource"></select></div>
+      <div class="field"><label>Target state (embryonic progenitor ◆)</label><select id="selTarget"></select></div>
+      <div class="field"><label>Species</label>
+        <div class="seg" id="segSpecies">
+          <button data-v="human">Human</button><button data-v="mouse">Mouse</button></div></div>
+      <div class="transition-box" id="transBox" style="margin-top:6px"></div>
+    </div></div>
+    <div class="card"><div class="ct">Rejuvenation objective</div><div class="cb">
+      <div style="font-size:12.5px;color:var(--mut)">Reverse the selected adult/mature cell state back toward its embryonic progenitor, nominating (a) a <b style="color:var(--act)">precision TF combination</b> (activate + knock-out) and (b) <b style="color:var(--acc2)">small-molecule treatments</b> that mirror it — validated in-silico by a sequence model.</div>
+    </div></div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+    <div class="ribbon" id="ribbon"></div>
+    <div id="stageMeta"></div>
+    <div id="stageData"></div>
+  </main>
+</div></div>
+
+<div id="provModal" class="hidden" style="position:fixed;inset:0;background:#0009;z-index:100;display:flex;align-items:center;justify-content:center;padding:24px" onclick="if(event.target===this)this.classList.add('hidden')">
+  <div style="max-width:640px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:22px;max-height:82vh;overflow:auto">
+    <h3 style="margin-bottom:12px">Provenance — how this interface was built</h3>
+    <p style="color:var(--mut);font-size:13px">Every live table and number is extracted from real artifacts produced by four analysis sessions in this project. Nothing is synthetic.</p>
+    <table style="margin-top:10px"><thead><tr><th>Stage</th><th>Source session</th><th>Key artifacts</th></tr></thead><tbody>
+      <tr><td>A</td><td>Perturb-seq Landscape Review</td><td class="mono" style="font-size:11px">perturbseq_datasets_catalog.csv · tf_to_drug_connectivity</td></tr>
+      <tr><td>B</td><td>Human Lung Dev Datasets</td><td class="mono" style="font-size:11px">*_subatlas.h5ad · ALL_lineage_state_TFs.csv</td></tr>
+      <tr><td>C</td><td>Lung Dev + Fibroblast Reprog</td><td class="mono" style="font-size:11px">GRN_network_scores_enhancer.csv · *_GRN_edges.parquet</td></tr>
+      <tr><td>D</td><td>Fibroblast Reprog + Epithelial</td><td class="mono" style="font-size:11px">AT2_to_TiP_TF_recipe.csv · alternative_stagewise_TF_scheme.csv</td></tr>
+      <tr><td>E</td><td>Perturb-seq + Fibroblast Reprog</td><td class="mono" style="font-size:11px">AT2_to_TiP_compounds.csv · lung_..._small_molecules.csv</td></tr>
+      <tr><td>F</td><td>PertFormer AT2 OSKM Knock-in</td><td class="mono" style="font-size:11px">distaltf_fate_proximity_readout.json · fate_proximity_readout.json</td></tr>
+    </tbody></table>
+    <div style="text-align:right;margin-top:14px"><button class="provbtn" onclick="document.getElementById('provModal').classList.add('hidden')">Close</button></div>
+  </div>
+</div>
+
+<footer><div class="wrap">
+  <span class="foot-b">Universal Developmental Reprogramming Pipeline · standalone interface</span>
+  <span>Lung reference case: 4 sessions · 623k-cell atlas · 6 stages</span>
+  <button class="provbtn" id="provbtn">Data provenance</button>
+</div></footer>
+
+<script>
+
+const DATA = {"meta":{"project":"Universal Developmental Reprogramming Pipeline","subtitle":"Atlas \u2192 GRN \u2192 in-silico reversal \u2192 TF combo + small-molecule rejuvenation","reference_case":"Lung \u00b7 Epithelial \u00b7 adult AT2 \u2192 fetal distal-tip progenitor","generated":"from 4 project sessions"},"organs":{"lung":{"name":"Lung","status":"implemented","emoji_free_icon":"LU","note":"Reference organ. Full 6-stage pipeline executed AT2\u2192fetal distal-tip.","atlas_cells":623919,"atlas_datasets":8},"liver":{"name":"Liver","status":"planned","note":"Hepatocyte\u2192hepatoblast reversal. Migration target."},"pancreas":{"name":"Pancreas","status":"planned","note":"Acinar/\u03b2-cell\u2192MPC reversal. Migration target."},"cornea":{"name":"Cornea","status":"planned","note":"Limbal/epithelial regeneration. Migration target."}},"stages":[{"id":"A","title":"Evidence base","short":"Perturb-seq + TF atlases","goal":"Catalog large-scale single-cell perturbation screens (Perturb-seq, CRISPRi/a, ORF-OE TF atlases) and chemical screens for the organ; build the TF\u2192drug connectivity engine.","inputs":["Organ / cell-line filter","TF-focus & modality preference"],"methods":["GEO / OpenAlex / ArrayExpress systematic survey","LINCS L1000 connectivity (via Enrichr)","Tahoe-100M single-cell drug atlas cross-reference"],"outputs":["Verified dataset catalog (DOI+accession)","TF signature \u2192 compound connectivity engine"],"session":"Perturb-seq Landscape Review","compute":"CPU \u00b7 web APIs","status":"implemented"},{"id":"B","title":"Developmental atlas","short":"Harmonize + integrate","goal":"For the chosen organ+layer, survey and download public scRNA (\u00b1multiome) spanning embryonic\u2192perinatal\u2192adult; harmonize to one gene/annotation/phase axis; integrate per-lineage; resolve cell states and their master TFs.","inputs":["Organ + cell layer","Developmental phase coverage"],"methods":["CZI CELLxGENE Census + GEO retrieval","Per-cell phase from development_stage ontology","4-lineage annotation (marker-validated)","scVI / scANVI per-lineage integration (raw counts retained)","Leiden states + DE master-TF calling (pySCENIC TF list)"],"outputs":["Harmonized master atlas (.h5ad)","Per-lineage integrated sub-atlas","State\u2192master-TF table"],"session":"Human Lung Dev Datasets","compute":"CPU (scVI) \u2192 GPU at scale","status":"implemented"},{"id":"C","title":"GRN inference","short":"Regulatory network","goal":"Per lineage and developmental stage, infer the gene-regulatory network, TF regulons and network hubs \u2014 the causal substrate for in-silico perturbation.","inputs":["Integrated sub-atlas (raw counts)","ATAC / enhancer data if available"],"methods":["CellOracle base-GRN (promoter/motif) \u2014 RNA-only route","SCENIC+ eRegulons \u2014 enhancer-aware route (needs matched ATAC)","Bagging-ridge regression per stage; degree-centrality hubs"],"outputs":["Per-stage GRN edges + network scores","TF regulon activity","Hub / centrality rankings"],"session":"Lung Dev + Fibroblast Reprog","compute":"GPU (SCENIC+ cisTarget) / CPU (CellOracle)","status":"implemented"},{"id":"D","title":"In-silico reversal","short":"TF recipe","goal":"Define the transition (adult mature state \u2192 embryonic progenitor state); run an in-silico KO/OE screen projected onto the transition vector; nominate a precision, stage-gated TF combination.","inputs":["Source state (adult mature)","Target state (embryonic progenitor)","Candidate TF pool (master TFs + hubs)"],"methods":["CellOracle signal-propagation KO/OE","Projection onto transition direction (cosine)","Stage-gated combo search vs single-TF baseline"],"outputs":["Precision TF recipe (ACTIVATE / KNOCK-OUT)","Stage-gated module scheme","Combo vs single-TF gains"],"session":"Fibroblast Reprog + Epithelial","compute":"CPU / GPU","status":"implemented"},{"id":"E","title":"Small-molecule mirror","short":"Compound nomination","goal":"Map each stage's TF/expression signature to compounds that mimic (or reverse) it; confirm nominations in a single-cell drug atlas; overlay organ-established reagents.","inputs":["Stage target signatures (from D)","Organ context (established reagents)"],"methods":["LINCS L1000 connectivity per signature","Tahoe-100M single-cell confirmation","Organ-literature reagent overlay + benchmark"],"outputs":["Ranked compound nominations (MoA, targets, approval)","Single-cell-confirmed hits","Curated organ cocktail"],"session":"Perturb-seq + Fibroblast Reprog","compute":"CPU \u00b7 web APIs","status":"implemented"},{"id":"F","title":"Deep-learning fate validation","short":"PertFormer proximity","goal":"Build DNA+ATAC inputs for {adult, progenitor, TF-knock-in}; run a 3B-parameter sequence model; score cosine fate-proximity \u0394; compare TF combinations and mouse\u2194human.","inputs":["ATAC/consensus peaks per state","TF motif set for the recipe (JASPAR)","Fate-gene readout panel"],"methods":["Motif\u2229accessible-peak in-silico KI (ATAC-only edit)","PertFormer forward pass (DNA+ATAC\u2192expression)","Cosine fate-proximity: cos(KI, target) \u2212 cos(ref, target)"],"outputs":["Fate-proximity \u0394 per combo & species","Combo ranking (specificity vs brute force)","Mouse\u2194human robustness"],"session":"PertFormer AT2 OSKM Knock-in","compute":"GPU A100 (Modal) \u2014 3B params, ~13GB weights","status":"implemented"}],"layers":{"epithelial":{"name":"Epithelial","atlas":{"cells":259453,"donors":79,"n_states":96,"fetal":21802,"perinatal":194731,"adult_aging":42920},"states":{"AT1":{"role":"mature","master_tfs":[{"tf":"MYRF","logFC":5.05},{"tf":"ZNF431","logFC":2.62},{"tf":"SP100","logFC":2.37},{"tf":"TEAD1","logFC":2.31},{"tf":"BACH1","logFC":2.12},{"tf":"KLF6","logFC":2.07},{"tf":"CUX1","logFC":2.05},{"tf":"NCOR2","logFC":1.7},{"tf":"LRRFIP1","logFC":1.64},{"tf":"TCF12","logFC":1.22}]},"AT2":{"role":"mature","master_tfs":[{"tf":"ETV1","logFC":3.51},{"tf":"ETV5","logFC":2.77},{"tf":"FOXP2","logFC":2.58},{"tf":"NR3C2","logFC":2.42},{"tf":"MECOM","logFC":2.34},{"tf":"RUFY3","logFC":2.27},{"tf":"TCF7L1","logFC":2.27},{"tf":"SOX5","logFC":2.11},{"tf":"HIVEP3","logFC":2.01},{"tf":"FOXP1","logFC":1.58}]},"Basal":{"role":"mature","master_tfs":[{"tf":"RPS4X","logFC":3.79},{"tf":"RPL6","logFC":3.11},{"tf":"UBB","logFC":3.07},{"tf":"RPL35","logFC":3.04},{"tf":"JUNB","logFC":2.97},{"tf":"ANXA1","logFC":2.85},{"tf":"FOSB","logFC":2.66},{"tf":"HNRNPA1","logFC":2.62},{"tf":"YBX1","logFC":2.58},{"tf":"ETS2","logFC":2.52}]},"Ciliated":{"role":"mature","master_tfs":[{"tf":"FOXJ1","logFC":6.7},{"tf":"FANK1","logFC":6.03},{"tf":"PRDX5","logFC":4.91},{"tf":"UBB","logFC":4.19},{"tf":"SOD1","logFC":4.0},{"tf":"RUVBL1","logFC":3.73},{"tf":"CD59","logFC":3.55},{"tf":"ANXA1","logFC":3.06},{"tf":"RFX3","logFC":2.79},{"tf":"HMGN3","logFC":2.4}]},"Other epithelial":{"role":"other","master_tfs":[{"tf":"TBX2","logFC":5.13},{"tf":"ZEB2","logFC":4.78},{"tf":"BNC2","logFC":4.49},{"tf":"MEIS1","logFC":3.1},{"tf":"ADARB1","logFC":2.78},{"tf":"MYLK","logFC":2.39},{"tf":"TCF4","logFC":1.69},{"tf":"FOXO1","logFC":1.56},{"tf":"HIF3A","logFC":1.41},{"tf":"RORA","logFC":0.63}]},"PNEC/ionocyte":{"role":"mature","master_tfs":[{"tf":"PROX1","logFC":6.71},{"tf":"ASCL1","logFC":6.19},{"tf":"NCALD","logFC":2.0},{"tf":"MEIS2","logFC":1.62},{"tf":"CBFA2T2","logFC":0.78},{"tf":"MSI2","logFC":0.72},{"tf":"NR3C2","logFC":0.66},{"tf":"SOX5","logFC":0.63},{"tf":"FOXN3","logFC":0.6},{"tf":"CHD2","logFC":0.58}]},"Progenitor/transitional":{"role":"progenitor","master_tfs":[{"tf":"RPS4X","logFC":5.5},{"tf":"RPL6","logFC":4.86},{"tf":"RPL35","logFC":4.77},{"tf":"HNRNPA1","logFC":4.49},{"tf":"UBB","logFC":3.73},{"tf":"UQCRB","logFC":3.68},{"tf":"YBX1","logFC":3.66},{"tf":"TPI1","logFC":3.39},{"tf":"RAN","logFC":3.39},{"tf":"PKM","logFC":3.31}]},"Secretory/RAS":{"role":"mature","master_tfs":[{"tf":"GRHL1","logFC":4.02},{"tf":"RUNX1","logFC":1.7},{"tf":"MSI2","logFC":1.62},{"tf":"ELF3","logFC":1.51},{"tf":"NFIA","logFC":1.49},{"tf":"XBP1","logFC":1.44},{"tf":"EHF","logFC":1.42},{"tf":"MRPS25","logFC":1.39},{"tf":"GLIS3","logFC":1.29},{"tf":"ETV6","logFC":1.16}]},"Stalk (fetal)":{"role":"progenitor","master_tfs":[{"tf":"HNRNPA1","logFC":5.27},{"tf":"HMGA1","logFC":5.11},{"tf":"RPS4X","logFC":5.01},{"tf":"RPL6","logFC":4.99},{"tf":"EGR1","logFC":4.45},{"tf":"HNRNPA0","logFC":4.41},{"tf":"RAN","logFC":4.11},{"tf":"JUN","logFC":4.1},{"tf":"PKM","logFC":3.92},{"tf":"HMGB1","logFC":3.54}]},"Tip (fetal)":{"role":"progenitor","master_tfs":[{"tf":"EGR1","logFC":3.29},{"tf":"HNRNPA1","logFC":3.13},{"tf":"FOS","logFC":3.04},{"tf":"RPL6","logFC":2.87},{"tf":"HNRNPA0","logFC":2.85},{"tf":"ODC1","logFC":2.76},{"tf":"JUN","logFC":2.37},{"tf":"ETV5","logFC":2.35},{"tf":"ENO1","logFC":2.23},{"tf":"HMGB1","logFC":1.95}]}}},"mesenchymal":{"name":"Mesenchymal","atlas":{"cells":132378,"donors":84,"n_states":78,"fetal":82976,"perinatal":32525,"adult_aging":16877},"states":{"Adventitial fibroblast":{"role":"mature","master_tfs":[{"tf":"ANXA1","logFC":3.11},{"tf":"OSR1","logFC":2.85},{"tf":"NPDC1","logFC":2.62},{"tf":"KLF2","logFC":2.18},{"tf":"KLF4","logFC":2.14},{"tf":"PRRX1","logFC":2.14},{"tf":"P4HB","logFC":1.76},{"tf":"FOS","logFC":1.64},{"tf":"HSPA5","logFC":1.6},{"tf":"NUCB1","logFC":1.36}]},"Airway fibroblast":{"role":"mature","master_tfs":[{"tf":"TCF21","logFC":2.75},{"tf":"MECOM","logFC":2.46},{"tf":"FOS","logFC":2.4},{"tf":"JUNB","logFC":1.88},{"tf":"RPL6","logFC":1.75},{"tf":"JUN","logFC":1.72},{"tf":"TAGLN2","logFC":1.67},{"tf":"EGR1","logFC":1.46},{"tf":"HSPA5","logFC":1.39},{"tf":"YWHAZ","logFC":1.21}]},"Alveolar/matrix fibroblast":{"role":"mature","master_tfs":[{"tf":"RORA","logFC":4.52},{"tf":"HIVEP3","logFC":3.81},{"tf":"BNC2","logFC":3.59},{"tf":"ADARB1","logFC":3.51},{"tf":"ZBTB20","logFC":3.27},{"tf":"SETBP1","logFC":3.25},{"tf":"MEIS1","logFC":2.47},{"tf":"PBX1","logFC":2.15},{"tf":"MBNL2","logFC":2.05},{"tf":"TCF12","logFC":1.99}]},"Chondrocyte":{"role":"mature","master_tfs":[{"tf":"SOX9","logFC":4.18},{"tf":"RARG","logFC":2.63},{"tf":"PRRX1","logFC":2.34},{"tf":"RPS4X","logFC":1.58},{"tf":"JUNB","logFC":1.58},{"tf":"ID1","logFC":1.51},{"tf":"ID4","logFC":1.4},{"tf":"CD59","logFC":1.31},{"tf":"HNRNPA1","logFC":1.12},{"tf":"P4HB","logFC":0.96}]},"Developmental fibroblast":{"role":"progenitor","master_tfs":[{"tf":"RPL6","logFC":2.14},{"tf":"HNRNPA1","logFC":2.12},{"tf":"TCF21","logFC":2.07},{"tf":"RPS4X","logFC":2.04},{"tf":"OSR1","logFC":2.02},{"tf":"HSPA5","logFC":1.84},{"tf":"APEX1","logFC":1.76},{"tf":"SNAI2","logFC":1.68},{"tf":"NONO","logFC":1.66},{"tf":"RAN","logFC":1.6}]},"Fibroblast (general)":{"role":"mature","master_tfs":[{"tf":"RPS4X","logFC":2.35},{"tf":"RPL35","logFC":2.07},{"tf":"FOS","logFC":1.93},{"tf":"ID2","logFC":1.9},{"tf":"UBB","logFC":1.88},{"tf":"RPL6","logFC":1.88},{"tf":"SNAI2","logFC":1.79},{"tf":"HNRNPA1","logFC":1.75},{"tf":"JUNB","logFC":1.75},{"tf":"SRP9","logFC":1.3}]},"Lipofibroblast":{"role":"mature","master_tfs":[{"tf":"FOSL1","logFC":7.64},{"tf":"NR4A3","logFC":6.02},{"tf":"NFIL3","logFC":5.91},{"tf":"NR4A2","logFC":5.68},{"tf":"MYC","logFC":5.3},{"tf":"FOSL2","logFC":5.05},{"tf":"CREM","logFC":4.75},{"tf":"ARID5A","logFC":4.45},{"tf":"KLF9","logFC":4.39},{"tf":"XBP1","logFC":3.82}]},"Mesothelial":{"role":"mature","master_tfs":[{"tf":"RORA","logFC":3.93},{"tf":"ADARB1","logFC":3.07},{"tf":"ZBTB20","logFC":2.97},{"tf":"HIVEP3","logFC":2.84},{"tf":"SETBP1","logFC":2.56},{"tf":"BNC2","logFC":2.45},{"tf":"FOXO1","logFC":2.34},{"tf":"BACH2","logFC":2.13},{"tf":"MEIS1","logFC":2.11},{"tf":"PBX1","logFC":1.88}]},"Myofibroblast/SCMF":{"role":"mature","master_tfs":[{"tf":"ZNF536","logFC":3.64},{"tf":"ERG","logFC":2.72},{"tf":"RUNX1","logFC":2.57},{"tf":"SOX5","logFC":2.15},{"tf":"ZEB1","logFC":2.12},{"tf":"PBX3","logFC":1.64},{"tf":"FOXP1","logFC":1.52},{"tf":"TBX5","logFC":1.15},{"tf":"TBX3","logFC":1.11},{"tf":"TCF12","logFC":0.95}]},"Other mesenchyme":{"role":"other","master_tfs":[{"tf":"NPDC1","logFC":1.42},{"tf":"RPS4X","logFC":1.25},{"tf":"RPL35","logFC":1.02},{"tf":"SOX4","logFC":0.91},{"tf":"HNRNPA1","logFC":0.8},{"tf":"YBX1","logFC":0.77},{"tf":"UBB","logFC":0.76},{"tf":"HSPA5","logFC":0.71},{"tf":"UQCRB","logFC":0.66},{"tf":"PRDX5","logFC":0.65}]},"Pericyte":{"role":"mature","master_tfs":[{"tf":"HEYL","logFC":4.45},{"tf":"FOXS1","logFC":4.11},{"tf":"MEF2C","logFC":3.6},{"tf":"HES4","logFC":3.21},{"tf":"EBF1","logFC":3.2},{"tf":"EPAS1","logFC":2.56},{"tf":"TBX5","logFC":2.13},{"tf":"EZR","logFC":2.12},{"tf":"TBX2","logFC":1.87},{"tf":"NR2F2","logFC":1.43}]},"Proliferating mesenchyme":{"role":"progenitor","master_tfs":[{"tf":"HMGB2","logFC":4.26},{"tf":"HMGB1","logFC":2.46},{"tf":"HNRNPA1","logFC":2.31},{"tf":"U2AF1","logFC":2.3},{"tf":"RAN","logFC":2.1},{"tf":"RPL35","logFC":2.09},{"tf":"YBX1","logFC":1.87},{"tf":"SRP9","logFC":1.85},{"tf":"TPI1","logFC":1.74},{"tf":"HNRNPA0","logFC":1.67}]},"Smooth muscle":{"role":"mature","master_tfs":[{"tf":"ATF3","logFC":2.9},{"tf":"FHL2","logFC":2.6},{"tf":"NR4A2","logFC":2.55},{"tf":"NR4A1","logFC":2.39},{"tf":"ID4","logFC":2.22},{"tf":"HES4","logFC":1.97},{"tf":"EPAS1","logFC":1.93},{"tf":"MSRB3","logFC":1.76},{"tf":"MEF2C","logFC":1.62},{"tf":"MYLK","logFC":1.5}]}}},"endothelial":{"name":"Endothelial","atlas":{"cells":41412,"donors":76,"n_states":54,"fetal":7196,"perinatal":16641,"adult_aging":17575},"states":{"Aerocyte/CAP2":{"role":"mature","master_tfs":[{"tf":"TBX2","logFC":3.3},{"tf":"NCALD","logFC":3.22},{"tf":"ZNF331","logFC":2.57},{"tf":"TBX3","logFC":1.78},{"tf":"MEIS1","logFC":1.76},{"tf":"MYLK","logFC":1.6},{"tf":"ZBTB16","logFC":1.28},{"tf":"KLF7","logFC":1.05},{"tf":"MEF2A","logFC":1.02},{"tf":"EPAS1","logFC":0.93}]},"Arterial":{"role":"mature","master_tfs":[{"tf":"MECOM","logFC":4.14},{"tf":"SETBP1","logFC":3.12},{"tf":"SMAD6","logFC":2.8},{"tf":"MEIS2","logFC":2.58},{"tf":"FOXO1","logFC":2.02},{"tf":"PDLIM5","logFC":1.79},{"tf":"FOXN3","logFC":1.66},{"tf":"ERG","logFC":1.4},{"tf":"EPAS1","logFC":1.39},{"tf":"TCF4","logFC":1.01}]},"EC (developmental/general)":{"role":"progenitor","master_tfs":[{"tf":"HNRNPA1","logFC":3.05},{"tf":"RPS4X","logFC":3.03},{"tf":"RPL35","logFC":2.96},{"tf":"SOX4","logFC":2.67},{"tf":"RPL6","logFC":2.58},{"tf":"SRP9","logFC":2.48},{"tf":"UBB","logFC":2.15},{"tf":"HMGB1","logFC":2.12},{"tf":"UQCRB","logFC":2.08},{"tf":"YBX1","logFC":1.95}]},"EC smooth-muscle-like":{"role":"mature","master_tfs":[{"tf":"MYC","logFC":3.34},{"tf":"FOSB","logFC":2.96},{"tf":"NR2F2","logFC":2.89},{"tf":"RPS4X","logFC":2.88},{"tf":"CEBPD","logFC":2.79},{"tf":"EGR1","logFC":2.72},{"tf":"ATF3","logFC":2.62},{"tf":"CEBPB","logFC":2.61},{"tf":"ARID5B","logFC":2.47},{"tf":"JUND","logFC":2.28}]},"Lymphatic":{"role":"mature","master_tfs":[{"tf":"PROX1","logFC":8.11},{"tf":"TFF3","logFC":7.14},{"tf":"TBX1","logFC":6.94},{"tf":"NR2F1","logFC":4.82},{"tf":"GLIS3","logFC":4.47},{"tf":"SMAD1","logFC":3.54},{"tf":"ZNF521","logFC":2.82},{"tf":"NR2F2","logFC":2.45},{"tf":"NFAT5","logFC":2.09},{"tf":"ELK3","logFC":1.89}]},"Other endothelial":{"role":"other","master_tfs":[{"tf":"ARID5A","logFC":1.77},{"tf":"PRDM1","logFC":1.75},{"tf":"MECOM","logFC":1.58},{"tf":"EDN1","logFC":1.31},{"tf":"ENO1","logFC":1.21},{"tf":"KLF6","logFC":1.12},{"tf":"TAGLN2","logFC":1.04},{"tf":"FOSL2","logFC":1.04},{"tf":"HIF1A","logFC":0.84},{"tf":"FOXO1","logFC":0.74}]},"Venous":{"role":"mature","master_tfs":[{"tf":"ZNF385D","logFC":3.84},{"tf":"FOXC1","logFC":3.58},{"tf":"MYC","logFC":3.02},{"tf":"NUAK1","logFC":2.82},{"tf":"RPS4X","logFC":2.24},{"tf":"RPL6","logFC":1.86},{"tf":"NPDC1","logFC":1.74},{"tf":"RPL35","logFC":1.61},{"tf":"CD59","logFC":1.59},{"tf":"YBX1","logFC":1.26}]},"gCap/CAP1":{"role":"mature","master_tfs":[{"tf":"EPAS1","logFC":1.75},{"tf":"EDN1","logFC":1.51},{"tf":"FOXN3","logFC":1.25},{"tf":"SMAD6","logFC":1.23},{"tf":"FLI1","logFC":1.06},{"tf":"HIF3A","logFC":1.03},{"tf":"ZBTB16","logFC":0.98},{"tf":"TCF4","logFC":0.83},{"tf":"TBX3","logFC":0.81},{"tf":"NFIB","logFC":0.61}]}}},"immune":{"name":"Immune","atlas":{"cells":190676,"donors":87,"n_states":163,"fetal":84013,"perinatal":51379,"adult_aging":55279},"states":{"B/plasma cell":{"role":"mature","master_tfs":[{"tf":"SPIB","logFC":4.09},{"tf":"POU2AF1","logFC":3.37},{"tf":"BCL11A","logFC":2.34},{"tf":"TCF4","logFC":2.27},{"tf":"EZR","logFC":1.87},{"tf":"RPS4X","logFC":1.73},{"tf":"RPL35","logFC":1.52},{"tf":"RPL6","logFC":1.47},{"tf":"MEF2C","logFC":1.43},{"tf":"TAGLN2","logFC":1.25}]},"Dendritic cell":{"role":"mature","master_tfs":[{"tf":"ZNF385A","logFC":3.03},{"tf":"KLF4","logFC":2.61},{"tf":"ATF3","logFC":2.48},{"tf":"FOS","logFC":2.44},{"tf":"SPI1","logFC":2.4},{"tf":"MEF2C","logFC":2.31},{"tf":"CEBPD","logFC":2.31},{"tf":"IRF8","logFC":2.14},{"tf":"ACAA1","logFC":1.77},{"tf":"HMGA1","logFC":1.71}]},"Erythroid/Mk":{"role":"mature","master_tfs":[{"tf":"KLF1","logFC":7.91},{"tf":"TAL1","logFC":6.65},{"tf":"SOX6","logFC":6.28},{"tf":"GATA1","logFC":5.72},{"tf":"NFE2","logFC":5.26},{"tf":"NFIX","logFC":3.98},{"tf":"YOD1","logFC":3.43},{"tf":"CAT","logFC":2.1},{"tf":"LYL1","logFC":2.08},{"tf":"ZMAT2","logFC":0.92}]},"ILC":{"role":"mature","master_tfs":[{"tf":"RORC","logFC":5.36},{"tf":"GATA3","logFC":3.42},{"tf":"ZBTB16","logFC":2.92},{"tf":"HNRNPA1","logFC":2.46},{"tf":"RPS4X","logFC":2.34},{"tf":"NR4A1","logFC":2.34},{"tf":"RPL6","logFC":2.21},{"tf":"TPI1","logFC":2.03},{"tf":"TAGLN2","logFC":1.88},{"tf":"ENO1","logFC":1.84}]},"Macrophage":{"role":"mature","master_tfs":[{"tf":"PPARG","logFC":6.58},{"tf":"MITF","logFC":5.23},{"tf":"TCF7L2","logFC":4.74},{"tf":"TFEC","logFC":3.94},{"tf":"RUNX1","logFC":3.06},{"tf":"BACH1","logFC":2.93},{"tf":"ZEB2","logFC":2.84},{"tf":"MEF2A","logFC":2.65},{"tf":"ETV6","logFC":2.61},{"tf":"RBPJ","logFC":2.59}]},"Mast/granulocyte":{"role":"mature","master_tfs":[{"tf":"GATA2","logFC":8.13},{"tf":"MEIS2","logFC":6.52},{"tf":"ERG","logFC":4.93},{"tf":"RPS6KA5","logFC":2.72},{"tf":"MCTP2","logFC":2.64},{"tf":"LYL1","logFC":2.55},{"tf":"SOX4","logFC":1.94},{"tf":"FOXP1","logFC":1.77},{"tf":"ANXA1","logFC":1.62},{"tf":"MITF","logFC":1.41}]},"Monocyte":{"role":"mature","master_tfs":[{"tf":"MAFB","logFC":2.51},{"tf":"RXRA","logFC":2.06},{"tf":"ZEB2","logFC":2.0},{"tf":"ETS2","logFC":1.99},{"tf":"CEBPB","logFC":1.72},{"tf":"POU2F2","logFC":1.6},{"tf":"SPI1","logFC":1.57},{"tf":"MXD1","logFC":1.51},{"tf":"BACH1","logFC":1.32},{"tf":"HIF1A","logFC":1.01}]},"NK cell":{"role":"mature","master_tfs":[{"tf":"TBX21","logFC":4.22},{"tf":"MYBL1","logFC":3.37},{"tf":"MCTP2","logFC":3.24},{"tf":"EOMES","logFC":3.18},{"tf":"STAT4","logFC":2.72},{"tf":"NFATC2","logFC":2.57},{"tf":"ETS1","logFC":1.94},{"tf":"RORA","logFC":1.74},{"tf":"IRF1","logFC":1.47},{"tf":"JUN","logFC":1.47}]},"Neutrophil":{"role":"mature","master_tfs":[{"tf":"MXD1","logFC":2.93},{"tf":"EGR1","logFC":2.66},{"tf":"ZNF267","logFC":2.58},{"tf":"ETS2","logFC":2.38},{"tf":"BCL6","logFC":2.19},{"tf":"FOSL2","logFC":1.86},{"tf":"SPI1","logFC":1.65},{"tf":"IRF1","logFC":1.45},{"tf":"CEBPB","logFC":1.42},{"tf":"NFE2L2","logFC":1.17}]},"Other immune":{"role":"other","master_tfs":[{"tf":"JUN","logFC":1.3},{"tf":"HNRNPA1","logFC":1.23},{"tf":"IRF1","logFC":1.15},{"tf":"HMGB1","logFC":1.09},{"tf":"XBP1","logFC":1.01},{"tf":"FOS","logFC":0.94},{"tf":"RPL6","logFC":0.87},{"tf":"HMGN3","logFC":0.82},{"tf":"HNRNPA0","logFC":0.79},{"tf":"YWHAZ","logFC":0.67}]},"Progenitor":{"role":"progenitor","master_tfs":[{"tf":"HMGA1","logFC":3.11},{"tf":"SOX4","logFC":2.97},{"tf":"HNRNPA1","logFC":2.77},{"tf":"APEX1","logFC":2.58},{"tf":"RPS4X","logFC":2.39},{"tf":"HDAC2","logFC":2.25},{"tf":"ENO1","logFC":2.13},{"tf":"RPL6","logFC":2.09},{"tf":"ILF2","logFC":2.03},{"tf":"RAN","logFC":1.99}]},"T cell":{"role":"mature","master_tfs":[{"tf":"BCL11B","logFC":4.0},{"tf":"LEF1","logFC":3.24},{"tf":"TCF7","logFC":2.82},{"tf":"ETS1","logFC":2.11},{"tf":"RORA","logFC":2.0},{"tf":"JUND","logFC":1.45},{"tf":"ANXA1","logFC":1.44},{"tf":"SOD1","logFC":1.21},{"tf":"RPS4X","logFC":1.09},{"tf":"UBB","logFC":0.97}]},"T/NK intermediate":{"role":"mature","master_tfs":[{"tf":"JUND","logFC":3.26},{"tf":"UBB","logFC":2.34},{"tf":"RUNX3","logFC":2.15},{"tf":"CREM","logFC":2.09},{"tf":"ID2","logFC":1.71},{"tf":"ANXA1","logFC":1.4},{"tf":"RPS4X","logFC":1.39},{"tf":"SOD1","logFC":1.38},{"tf":"EZR","logFC":1.21},{"tf":"HSPA5","logFC":1.04}]}}}},"refcase":{"recipe":[{"tf":"SOX9","action":"ACTIVATE (OE/CRISPRa)","rationale":"distal tip master; TiP z=1.67, negative in ciliated (-0.71)","grn":"in enhancer GRN (197 targets); KO\u2192AT2l/TiP axis","note":"Restored by enhancer GRN","conf":"HIGH \u2014 TiP-specific, ciliated-negative"},{"tf":"LEF1","action":"ACTIVATE (OE/CRISPRa)","rationale":"Wnt effector; TiP z=1.58, strongly AT2-negative (-1.03)","grn":"in GRN","note":"Wnt maintains distal tip niche","conf":"HIGH \u2014 most TiP-specific, strongly AT2-negative"},{"tf":"ETV5","action":"ACTIVATE (OE/CRISPRa)","rationale":"FGF10-FGFR2 effector; TiP z=1.30","grn":"in GRN (21 targets; underpowered)","note":"FGF sustains tip progenitors","conf":"MEDIUM \u2014 shared TiP/AT2 (also maintains AT2)"},{"tf":"FOXP2","action":"ACTIVATE (support)","rationale":"distal epithelial; TiP z=1.11","grn":"in GRN","note":"tip/distal identity","conf":"MEDIUM \u2014 modest specificity"},{"tf":"CEBPA","action":"KNOCK OUT (CRISPRi/KO)","rationale":"AT2 maturation master; AT2l z=1.71","grn":"in GRN (26 targets)","note":"releases mature AT2 identity","conf":"HIGH \u2014 AT2-specific maturation master"},{"tf":"PPARG","action":"KNOCK OUT (CRISPRi/KO)","rationale":"AT2 lipid/surfactant; AT2l z=1.49","grn":"in GRN","note":"AT2 surfactant metabolism","conf":"MEDIUM \u2014 shared TiP/AT2 (KO may hurt TiP too)"},{"tf":"FOXJ1","action":"KNOCK OUT (CRISPRi/KO)","rationale":"ciliated master; Cili z=2.47","grn":"in GRN (391 targets); KO\u2192Cili","note":"blocks ciliated fate","conf":"HIGH \u2014 ciliated-specific"},{"tf":"MYB","action":"KNOCK OUT (CRISPRi/KO)","rationale":"ciliogenesis; Cili z=2.47","grn":"in GRN","note":"ciliated differentiation","conf":"HIGH \u2014 ciliated-specific"},{"tf":"RFX2","action":"KNOCK OUT (CRISPRi/KO)","rationale":"ciliogenesis (RFX family); Cili z=2.07","grn":"in GRN (499 targets)","note":"blocks ciliated fate","conf":"HIGH \u2014 ciliated-specific"},{"tf":"RFX3","action":"KNOCK OUT (CRISPRi/KO)","rationale":"ciliogenesis (RFX family); Cili z=2.29","grn":"in GRN (532 targets); KO\u2192Cili","note":"blocks ciliated fate","conf":"HIGH \u2014 ciliated-specific"},{"tf":"EHF","action":"KNOCK OUT (CRISPRi/KO)","rationale":"club/secretory (proximal airway)","grn":"in GRN","note":"suppresses club/secretory","conf":"MEDIUM \u2014 club/secretory"}],"modules":[{"module":"endoderm/foregut competence (KEEP ON)","source":"FOXA1, HNF4A (chem hubs: rank1-2 at MET_maturation, rank3/5 at XEN_like_intermediate)","tf":"FOXA1/FOXA2 + NKX2-1","role":"Retain lung-epithelial endoderm identity \u2014 already expressed in AT2; do NOT re-induce, just maintain (this is why OSKM-MET is unnecessary here).","evidence":"measured+lung (shared FOXA1)"},{"module":"progenitor-competence induction","source":"KLF2, ATF3 (into-intermediate drivers)","tf":"SOX9 + ID2","role":"Re-open distal-tip progenitor program. SOX9 = distal-tip master; ID2 = distal-tip marker. ID-family (Id1/2/3) were MEASURED mouse-OSKM progenitor hubs \u2014 an actual pipeline link.","evidence":"lung overlay (ID-family measured)"},{"module":"Notch / plasticity effector","source":"HES1, HES4 (chem XEN->MET hubs)","tf":"HES1","role":"HES1 is BOTH a measured endoderm-branch hub AND a genuine lung distal/airway Notch progenitor TF \u2014 double-supported, highest-confidence TF nomination.","evidence":"measured+lung (double)"},{"module":"de-maturation (RELAX / knock-down)","source":"mature-hub dismantling (FOXA1/HNF4A collapse at pluri)","tf":"CEBPA (down)","role":"CEBPA locks mature AT2 identity; its relaxation is the de-maturation step \u2014 analogous to the chemical route DISMANTLING its mature hub network to move states.","evidence":"lung overlay"}],"compounds":[{"name":"everolimus","moa":"MTOR inhibitor","targets":"MTOR, FKBP1A","approved":"yes","tip":7.0,"supAT2":226.1,"nhit":3},{"name":"belinostat","moa":"HDAC inhibitor","targets":"HDAC6","approved":"yes","tip":26.3,"supAT2":216.2,"nhit":3},{"name":"ponatinib","moa":"Multi-TK inhibitor","targets":"ABL1, PDGFRA, KDR, FGFR1, SRC, KIT","approved":"yes","tip":9.8,"supAT2":75.2,"nhit":3},{"name":"dabrafenib","moa":"RAF inhibitor","targets":"BRAF, RAF1","approved":"yes","tip":2.0,"supAT2":52.7,"nhit":3},{"name":"budesonide","moa":"Glucocorticoid receptor agonist","targets":"NR3C1","approved":"yes","tip":2.0,"supAT2":46.2,"nhit":3},{"name":"valdecoxib","moa":"Cyclooxygenase inhibitor","targets":"PTGS2","approved":"no","tip":1.0,"supAT2":40.6,"nhit":3},{"name":"regorafenib","moa":"Multi-TK inhibitor","targets":"BRAF, FLT1, FLT4, KDR, KIT, PDGFRB, RAF1, RET, TEK","approved":"yes","tip":21.3,"supAT2":34.4,"nhit":3},{"name":"palbociclib","moa":"CDK inhibitor","targets":"CDK4, CDK6","approved":"yes","tip":40.9,"supAT2":34.3,"nhit":3},{"name":"sunitinib","moa":"Multi-TK inhibitor","targets":"KDR, PDGFRB","approved":"yes","tip":33.7,"supAT2":24.0,"nhit":3},{"name":"triamcinolone","moa":"Glucocorticoid receptor agonist","targets":"NR3C1","approved":"yes","tip":1.4,"supAT2":20.6,"nhit":3},{"name":"homoharringtonine","moa":"Protein synthesis inhibitor","targets":"","approved":"yes","tip":4.1,"supAT2":14.4,"nhit":3},{"name":"clofarabine","moa":"DNA synthesis/repair inhibitor","targets":"","approved":"yes","tip":1.8,"supAT2":13.8,"nhit":3},{"name":"dinaciclib","moa":"CDK inhibitor","targets":"CDK1, CDK2, CDK5, CDK9","approved":"no","tip":6.0,"supAT2":10.4,"nhit":3},{"name":"gefitinib","moa":"EGFR/ERBB inhibitor","targets":"EGFR","approved":"yes","tip":9.4,"supAT2":8.9,"nhit":3},{"name":"crizotinib","moa":"Multi-TK inhibitor","targets":"ALK, MET, ROS1","approved":"yes","tip":4.1,"supAT2":7.5,"nhit":3},{"name":"afatinib","moa":"EGFR/ERBB inhibitor","targets":"EGFR, ERBB2","approved":"yes","tip":0.5,"supAT2":7.0,"nhit":3},{"name":"vemurafenib","moa":"RAF inhibitor","targets":"BRAF","approved":"yes","tip":3.6,"supAT2":6.6,"nhit":3},{"name":"dexamethasone","moa":"Glucocorticoid receptor agonist","targets":"NR3C1","approved":"yes","tip":7.4,"supAT2":5.1,"nhit":3}],"curated_sm":[{"name":"CHIR99021","pathway":"GSK3\u03b2 inh \u2192 Wnt/\u03b2-catenin ON","source":"measured prior + lung-established","rationale":"Wnt-high is THE canonical AT2/distal-progenitor stemness signal (AXIN2+/Wnt-responsive AT2 are the facultative stem subset). In my reprogramming drug-priors AND the best-established lung stem trigger.","conf":"HIGH (double)"},{"name":"RepSox (616452)","pathway":"TGF\u03b2/ALK5 inh","source":"measured prior + lung-established","rationale":"TGF\u03b2 inhibition favors AT2 self-renewal and blocks AT2\u2192AT1 differentiation/senescence \u2014 pushes toward progenitor. In priors + strong lung support.","conf":"HIGH (double)"},{"name":"Y-27632","pathway":"ROCK inh","source":"measured prior + lung-established","rationale":"Standard survival/plasticity agent in every AT2 organoid protocol; in reprogramming priors. Permissive, not instructive.","conf":"HIGH (double)"},{"name":"decitabine","pathway":"DNMT inh","source":"MEASURED (chem XEN\u2192MET cocktail)","rationale":"Epigenetic de-repression to relax the mature-AT2 methylome and re-open progenitor loci \u2014 mechanistically transferable from the measured endoderm-stage nomination.","conf":"MED (measured, needs lung test)"},{"name":"DMH1 / dorsomorphin","pathway":"BMP type-I receptor inh","source":"lung-established (not in LINCS set)","rationale":"Low BMP favors distal progenitor; BMP4 drives AT1. BMP inhibition holds the progenitor state. Lung-literature addition, absent from my compound library.","conf":"MED (lung overlay)"},{"name":"FGF10 (+ FGF7)","pathway":"FGFR2b agonist \u2192 ETV5","source":"lung-established (biologic, not small-molecule)","rationale":"The distal mesenchyme\u2192epithelium progenitor signal; maintains ETV5/AT2 competence. A biologic, listed for completeness of the niche.","conf":"context (biologic)"},{"name":"gefitinib / afatinib","pathway":"EGFR/ERBB inh","source":"MEASURED (chem init\u2192XEN cocktail)","rationale":"Top measured endoderm-entry nomination. CAUTION for lung: EGF supports AT2 organoid growth, so EGFR-inhibition may oppose expansion \u2014 flagged as measured-but-lung-uncertain.","conf":"LOW (measured, lung-conflicting)"}],"tahoe":[{"intv":"Binimetinib+Regorafenib","type":"combo","AT2dn":0.69,"tipup":0.14,"score":2.15},{"intv":"Afatinib+Binimetinib","type":"combo","AT2dn":0.6,"tipup":0.39,"score":1.99},{"intv":"Binimetinib","type":"single","AT2dn":0.35,"tipup":0.01,"score":1.97},{"intv":"Binimetinib+palbociclib","type":"combo","AT2dn":0.29,"tipup":0.01,"score":1.28},{"intv":"Afatinib+Regorafenib","type":"combo","AT2dn":0.65,"tipup":0.5,"score":0.9},{"intv":"Regorafenib","type":"single","AT2dn":0.4,"tipup":0.12,"score":0.56},{"intv":"Afatinib+Abemaciclib","type":"combo","AT2dn":-0.03,"tipup":0.51,"score":0.36},{"intv":"Afatinib","type":"single","AT2dn":0.31,"tipup":0.38,"score":0.35},{"intv":"Afatinib+palbociclib","type":"combo","AT2dn":0.25,"tipup":0.37,"score":0.03},{"intv":"Abemaciclib","type":"single","AT2dn":-0.34,"tipup":0.14,"score":0.0},{"intv":"Afatinib+Everolimus","type":"combo","AT2dn":0.23,"tipup":0.62,"score":-0.08},{"intv":"palbociclib","type":"single","AT2dn":-0.04,"tipup":-0.0,"score":-0.32},{"intv":"Vemurafenib","type":"single","AT2dn":-0.14,"tipup":0.34,"score":-0.38},{"intv":"Dabrafenib","type":"single","AT2dn":-0.08,"tipup":0.32,"score":-0.46},{"intv":"Everolimus","type":"single","AT2dn":-0.07,"tipup":0.25,"score":-0.48},{"intv":"olaparib","type":"single","AT2dn":-0.1,"tipup":0.16,"score":-1.02},{"intv":"Trametinib","type":"single","AT2dn":-0.54,"tipup":-0.32,"score":-1.47}],"fate":{"distalTF":{"human":{"ref":0.656,"ki":0.763,"delta":0.107},"mouse":{"ref":0.792,"ki":0.702,"delta":-0.09}},"OSKM":{"human":{"ref":0.656,"ki":0.712,"delta":0.055},"mouse":{"ref":0.792,"ki":0.745,"delta":-0.047}},"panel":["SOX9","ID2","ETV5","TESC","MYCN","SOX11","FGF20","RNF43","NKX2-1","SFTPC","SFTPB","SFTPA1","ABCA3","LAMP3","NAPSA","SLC34A2","PGC","POU5F1","SOX2","KLF4","MYC"]}},"evidence":[{"study":"Single-cell CRISPRi transcriptome screening of hypoxia-regulated lncRNAs in LUAD","author":"(GEO GSE249597)","year":"2024","method":"CROP-seq / single-cell CRISPRi","pert":"CRISPRi","tf":"No (lncRNA)","line":"LUAD cells","organ":"Lung (adenocarcinoma)","org":"Human","cells":"~unknown","acc":"GSE249597","tier":"1 (Lung)"},{"study":"Identification of required host factors for SARS-CoV-2 infection (A549)","author":"(GEO GSE159519)","year":"2021","method":"Single-cell CRISPR screen (Perturb-seq style)","pert":"CRISPR-KO","tf":"No","line":"A549 (ACE2)","organ":"Lung","org":"Human","cells":"~unknown","acc":"GSE159519","tier":"1 (Lung)"},{"study":"Massively multiplex chemical transcriptomics at single-cell resolution (sci-Plex","author":"Srivatsan SR","year":"2019","method":"sci-Plex (nuclear-hashed sci-RNA-seq)","pert":"Chemical (small-molecule)","tf":"No (chemical; some H","line":"A549, MCF7, K562","organ":"Lung (A549) + others","org":"Human","cells":"~650,000","acc":"GSE139944","tier":"1 (Lung, chemical)"},{"study":"Massively parallel phenotyping of coding variants in cancer with Perturb-seq","author":"Ursu O","year":"2022","method":"Perturb-seq (expressed cDNA/ORF + CRISPR)","pert":"ORF overexpression (WT + varia","tf":"Partial (TP53 is a T","line":"A549","organ":"Lung (adenocarcinoma)","org":"Human","cells":"~300,000","acc":"GSE161824","tier":"1 (Lung, top)"},{"study":"Chromatin and gene-regulatory dynamics of human pulmogenesis by single cell mult","author":"Kim","year":"2025","method":"Single-cell multiome (10x ARC: matched snRNA ","pert":"None (developmental atlas / ob","tf":"Partial (GRN/TF regu","line":"Primary human fetal lu","organ":"Lung (fetal/developing","org":"Human","cells":"~tens of thousands (44 clusters)","acc":"Zenodo community 'hlda' (records 17187937, 17188075, 17188133, ...); code github.com/GreenleafLab/HLDA","tier":"1 (lung, matched multiome, developmental trajectory)"},{"study":"Tahoe-100M: A Giga-Scale Single-Cell Perturbation Atlas for Context-Dependent Ge","author":"Zhang","year":"2025","method":"Massively parallel single-cell chemical trans","pert":"Small molecule (compound)","tf":"No (chemical MoA, ma","line":"50 cancer cell lines i","organ":"Multi (incl. Lung)","org":"Human","cells":"~100,000,000","acc":"HuggingFace: tahoebio/Tahoe-100M (+ vevotx/Tahoe-100M)","tier":"1 (lung: A549 present)"},{"study":"A transcription factor atlas of directed differentiation","author":"Joung J","year":"2023","method":"ORF-overexpression atlas + scRNA-seq (+ SHARE","pert":"TF ORF overexpression","tf":"YES \u2014 pan-TF (core r","line":"human ESC (hESC)","organ":"Pluripotent (multi-lin","org":"Human","cells":"~1,000,000+","acc":"GSE217460 (+ superseries)","tier":"2 (TF core resource)"},{"study":"Multimodal pooled Perturb-CITE-seq screens in patient models define mechanisms o","author":"Frangieh CJ","year":"2021","method":"Perturb-CITE-seq (RNA + surface protein + CRI","pert":"CRISPR-KO","tf":"Partial (includes TF","line":"Patient melanoma co-cu","organ":"Melanoma (model)","org":"Human","cells":"~218,000","acc":"Broad Single Cell Portal SCP1064","tier":"2 (TF-containing, multimodal RNA+protein)"},{"study":"Characterizing the molecular regulation of inhibitory immune checkpoints with mu","author":"Papalexi E","year":"2021","method":"ECCITE-seq (RNA + protein + CRISPR); Mixscape","pert":"CRISPR-KO","tf":"Partial (TF regulato","line":"THP-1 (monocytic)","organ":"Immune/myeloid (model)","org":"Human","cells":"~20,000+","acc":"GSE153056","tier":"2 (TF-containing, multimodal RNA+protein)"},{"study":"Dissecting cell identity via network inference and in silico gene perturbation (","author":"Kamimoto K","year":"2023","method":"Computational: GRN inference + in silico TF p","pert":"In silico (computational)","tf":"YES (TF-centric GRN)","line":"n/a (applies to any mu","organ":"","org":"Human, Mouse","cells":"","acc":"github.com/morris-lab/CellOracle","tier":"2 (core method for the aim)"},{"study":"Coupled single-cell CRISPR screening and epigenomic profiling reveals causal gen","author":"Rubin AJ","year":"2019","method":"Perturb-ATAC (single-cell CRISPR + scATAC sam","pert":"CRISPR-KO / CRISPRi","tf":"YES (TFs + chromatin","line":"Human keratinocytes; G","organ":"Skin / immune (model)","org":"Human","cells":"~4,200 (per subseries)","acc":"GSE116285 (super) / GSE116249","tier":"2 (matched epigenome + TF)"},{"study":"High-throughput single-cell chromatin accessibility CRISPR screens (Spear-ATAC)","author":"Pierce SE","year":"2021","method":"Spear-ATAC (pooled droplet scATAC + sgRNA rea","pert":"CRISPR-KO (KRAB/CRISPRi varian","tf":"YES (TFs: GATA1, etc","line":"K562, GM12878, MCF7","organ":"Leukemia / immune / br","org":"Human","cells":"~100,000s","acc":"GSE168851","tier":"2 (matched epigenome + TF)"},{"study":"Transcription factor dynamics, oscillation, and functions in human enteroendocri","author":"(GEO GSE238276)","year":"2024","method":"Single-cell multiome (RNA+ATAC) + TF perturba","pert":"TF perturbation/OE","tf":"YES (TF differentiat","line":"Human intestinal organ","organ":"Intestine (model)","org":"Human","cells":"~unknown","acc":"GSE238276","tier":"2 (matched multiome + TF)"},{"study":"Dissecting gene regulatory networks governing human cortical cell fate","author":"(GEO GSE284197)","year":"2025","method":"Single-cell multiome + CRISPR perturbation","pert":"CRISPR","tf":"YES (fate TFs)","line":"Human/primate cortical","organ":"Brain/cortex (model)","org":"Human, Macaque","cells":"~unknown","acc":"GSE284197","tier":"2 (matched multiome + TF, cross-species)"}],"dev_datasets":[{"short":"He2022_fetal","name":"He 2022 fetal lung atlas","phase":"embryonic-fetal","cells":71752,"donors":12},{"short":"FetalImmune","name":"Fetal lung immune (leukocytes)","phase":"embryonic-fetal","cells":61762,"donors":20},{"short":"DevHuman","name":"Developing Human Cell Atlas (lung)","phase":"embryonic-fetal","cells":47909,"donors":3},{"short":"LungMAP_MM","name":"LungMAP human multiome (RNA)","phase":"fetal\u21923yr\u2192adult","cells":46500,"donors":9},{"short":"Perinatal_NB","name":"Newborn lung molecular phenotypes","phase":"perinatal","cells":5499,"donors":2},{"short":"BPD_preterm","name":"Bronchopulmonary dysplasia (preterm\u2192toddler)","phase":"perinatal","cells":271381,"donors":24},{"short":"MultiPhase","name":"Multi-phase distal airway/alveoli","phase":"adult-aging","cells":115788,"donors":17},{"short":"HLCA_Krasnow","name":"Krasnow/Travaglini HLCA (Smart-seq2)","phase":"adult-aging","cells":9409,"donors":3}]};
+const DEFAULTS = {"epithelial": {"source": "AT2", "target": "Tip (fetal)"}, "mesenchymal": {"source": "Myofibroblast/SCMF", "target": "Developmental fibroblast"}, "endothelial": {"source": "gCap/CAP1", "target": "EC (developmental/general)"}, "immune": {"source": "Macrophage", "target": "Progenitor"}};
+const S = { organ:"lung", layer:"epithelial", source:null, target:null, species:"human", stage:"A" };
+
+const el = (id)=>document.getElementById(id);
+const esc = (s)=> (s==null?"":String(s)).replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
+
+function statesFor(layer){ return DATA.layers[layer] ? DATA.layers[layer].states : {}; }
+function roleStates(layer, role){
+  const st = statesFor(layer); return Object.keys(st).filter(k=>st[k].role===role);
+}
+
+/* ---------- populate selectors ---------- */
+function initSelectors(){
+  // organ
+  const os = el("selOrgan"); os.innerHTML="";
+  Object.entries(DATA.organs).forEach(([k,v])=>{
+    const o=document.createElement("option"); o.value=k;
+    o.textContent = v.name + (v.status!=="implemented" ? "  (planned)" : "");
+    if(v.status!=="implemented") o.dataset.planned="1";
+    os.appendChild(o);
+  });
+  os.value = S.organ;
+  rebuildLayer(); rebuildStates(); renderSpecies();
+}
+function rebuildLayer(){
+  const ls = el("selLayer"); ls.innerHTML="";
+  const implemented = DATA.organs[S.organ].status==="implemented";
+  Object.entries(DATA.layers).forEach(([k,v])=>{
+    const o=document.createElement("option"); o.value=k;
+    const n = v.atlas && v.atlas.cells ? " ("+(v.atlas.cells/1000|0)+"k cells)" : "";
+    o.textContent = v.name + (implemented?n:"");
+    ls.appendChild(o);
+  });
+  ls.value = S.layer; ls.disabled = !implemented;
+}
+function rebuildStates(){
+  const layer=S.layer;
+  const mature = roleStates(layer,"mature");
+  const prog = roleStates(layer,"progenitor");
+  const allStates = Object.keys(statesFor(layer));
+  const srcSel=el("selSource"), tgtSel=el("selTarget");
+  const implemented = DATA.organs[S.organ].status==="implemented";
+  // source = mature states first, then others
+  srcSel.innerHTML=""; tgtSel.innerHTML="";
+  const srcList = mature.concat(allStates.filter(s=>!mature.includes(s)));
+  const tgtList = prog.concat(allStates.filter(s=>!prog.includes(s)));
+  srcList.forEach(s=>{const o=document.createElement("option");o.value=s;o.textContent=s;srcSel.appendChild(o);});
+  tgtList.forEach(s=>{const o=document.createElement("option");o.value=s;
+    o.textContent=s+(statesFor(layer)[s].role==="progenitor"?"  ◆":"");tgtSel.appendChild(o);});
+  // defaults
+  const d = DEFAULTS[layer]||{};
+  S.source = (d.source && srcList.includes(d.source))? d.source : srcList[0];
+  S.target = (d.target && tgtList.includes(d.target))? d.target : (prog[0]||tgtList[0]);
+  srcSel.value=S.source; tgtSel.value=S.target;
+  srcSel.disabled=!implemented; tgtSel.disabled=!implemented;
+  renderTransitionBox();
+}
+function renderSpecies(){
+  document.querySelectorAll("#segSpecies button").forEach(b=>{
+    b.classList.toggle("on", b.dataset.v===S.species);
+  });
+}
+function renderTransitionBox(){
+  const box=el("transBox");
+  const layer=DATA.layers[S.layer];
+  const srole = layer.states[S.source] ? layer.states[S.source].role : "?";
+  const trole = layer.states[S.target] ? layer.states[S.target].role : "?";
+  box.innerHTML = `
+    <div class="tb-lab">Source · adult / mature (${esc(srole)})</div>
+    <div class="tb-state">${esc(S.source||"—")}</div>
+    <div class="arrow">↓ reverse ↓</div>
+    <div class="tb-lab">Target · embryonic progenitor (${esc(trole)})</div>
+    <div class="tb-state">${esc(S.target||"—")} ${trole==="progenitor"?"◆":""}</div>`;
+}
+
+/* ---------- pipeline ribbon ---------- */
+function renderRibbon(){
+  const r=el("ribbon"); r.innerHTML="";
+  DATA.stages.forEach((st,i)=>{
+    const node=document.createElement("div");
+    node.className="node"+(st.id===S.stage?" on":"");
+    node.onclick=()=>{S.stage=st.id;renderRibbon();renderStage();};
+    node.innerHTML=`<div class="inner">
+      <div class="stg">STAGE ${st.id}</div>
+      <div class="tt">${esc(st.title)}</div>
+      <div class="ss">${esc(st.short)}</div></div>`;
+    r.appendChild(node);
+    if(i<DATA.stages.length-1){
+      const c=document.createElement("div");c.className="node cn";c.style.flex="0 0 22px";
+      c.innerHTML="→";r.appendChild(c);
+    }
+  });
+}
+
+window.__DATA=DATA; window.__S=S;
+
+
+/* ---------- stage rendering ---------- */
+function stageObj(id){ return DATA.stages.find(s=>s.id===id); }
+function isLungRef(){ return S.organ==="lung"; }
+
+function renderStage(){
+  const st=stageObj(S.stage);
+  const m=document.getElementById("stageMeta");
+  const implemented = DATA.organs[S.organ].status==="implemented";
+  m.innerHTML = `
+    <div class="h2"><span class="stagenum">STAGE ${st.id}</span>${esc(st.title)}
+      <span class="badge ${st.status==='implemented'?'b-impl':'b-plan'}">${st.status}</span></div>
+    <div class="goal">${esc(st.goal)}</div>
+    <div class="cols">
+      <div class="io meth card"><div class="cb"><h4>Methods & tools</h4><ul>${st.methods.map(x=>`<li>${esc(x)}</li>`).join("")}</ul></div></div>
+      <div><div class="io card" style="margin-bottom:12px"><div class="cb"><h4>Inputs</h4><ul>${st.inputs.map(x=>`<li>${esc(x)}</li>`).join("")}</ul></div></div>
+      <div class="io out card"><div class="cb"><h4>Outputs</h4><ul>${st.outputs.map(x=>`<li>${esc(x)}</li>`).join("")}</ul></div></div></div>
+    </div>
+    <div class="meta-row">
+      <div class="m"><b>Source session:</b> ${esc(st.session)}</div>
+      <div class="m"><b>Compute:</b> ${esc(st.compute)}</div>
+    </div>`;
+  const d=document.getElementById("stageData");
+  if(!implemented){ d.innerHTML = plannedNotice(); return; }
+  d.innerHTML = ({A:renderA,B:renderB,C:renderC,D:renderD,E:renderE,F:renderF}[S.stage])();
+}
+
+function liveHead(title,tag){
+  return `<div class="dpanel"><div class="dh"><div class="livewrap"><span class="dot"></span>LIVE DATA · reference case</div>
+    <h3 style="margin-left:4px">${esc(title)}</h3><span class="tag">${esc(tag||"")}</span></div><div class="db">`;
+}
+function plannedNotice(){
+  const o=DATA.organs[S.organ];
+  return `<div class="dpanel"><div class="dh"><div class="plandata"><span class="dot"></span>PLANNED ORGAN</div>
+    <h3 style="margin-left:4px">${esc(o.name)} — migration target</h3></div>
+    <div class="db"><p style="color:var(--mut);margin:0 0 12px">${esc(o.note)}</p>
+    <div class="note">The pipeline spine (Stages A–F) is organ-agnostic. To bring <b>${esc(o.name)}</b> online, run the same workflow: assemble its developmental atlas (Stage B), infer GRNs (C), define the adult→progenitor reversal (D), mirror to small molecules (E), and validate with the sequence model (F). The lung reference case demonstrates every step end-to-end.</div></div></div>`;
+}
+
+/* Stage A — evidence base */
+function renderA(){
+  const rows = DATA.evidence.map(e=>`<tr>
+    <td>${esc(e.study)}${e.author?`<div style="color:var(--dim);font-size:11px">${esc(e.author)} ${esc(e.year)}</div>`:""}</td>
+    <td>${esc(e.method)}</td><td>${esc(e.pert)}</td>
+    <td>${esc(e.line)}<div style="color:var(--dim);font-size:11px">${esc(e.org)}</div></td>
+    <td class="mono" style="font-size:11px">${esc(e.cells)}</td>
+    <td class="mono" style="font-size:11px">${esc(e.acc)}</td></tr>`).join("");
+  return liveHead("Perturbation-screen evidence catalog","tier-ranked subset · verified DOI+accession")+
+    `<p style="color:var(--mut);margin:0 0 12px;font-size:13px">Large-scale single-cell perturbation screens catalogued for the organ, prioritizing lung lines (A549) and TF-focused libraries. Each row is a verified study; the TF→drug connectivity engine (LINCS L1000 + Tahoe-100M) is seeded from these signatures.</p>
+    <table><thead><tr><th>Study</th><th>Method</th><th>Perturbation</th><th>Line / organism</th><th>Cells</th><th>Accession</th></tr></thead><tbody>${rows}</tbody></table></div></div>`;
+}
+
+/* Stage B — developmental atlas */
+function renderB(){
+  const layer=DATA.layers[S.layer], a=layer.atlas;
+  const tot=(a.fetal||0)+(a.perinatal||0)+(a.adult_aging||0);
+  const pct=n=>tot?Math.max(4,Math.round(100*n/tot)):0;
+  const ds = DATA.dev_datasets.map(x=>`<tr><td class="mono" style="font-size:11px">${esc(x.short)}</td>
+    <td>${esc(x.name)}</td><td>${esc(x.phase)}</td><td class="mono" style="font-size:11px">${(x.cells/1000).toFixed(0)}k</td>
+    <td class="mono" style="font-size:11px">${x.donors}</td></tr>`).join("");
+  const states=Object.entries(layer.states);
+  const stRows=states.map(([name,v])=>{
+    const tfs=v.master_tfs.slice(0,6).map(t=>`<span class="chip">${esc(t.tf)}<span style="color:var(--dim)"> ${t.logFC}</span></span>`).join(" ");
+    const rc=v.role==="progenitor"?"p-hi":(v.role==="mature"?"p-act":"");
+    return `<tr><td>${esc(name)} ${v.role==="progenitor"?'<span class="pill p-hi">progenitor ◆</span>':''}</td><td><div class="chips">${tfs}</div></td></tr>`;
+  }).join("");
+  return liveHead(layer.name+" developmental sub-atlas",`${(a.cells/1000).toFixed(0)}k cells · ${a.donors} donors · ${a.n_states} annotated states`)+
+    `<div class="statgrid">
+       <div class="stat"><div class="v">${(a.cells/1000).toFixed(0)}k</div><div class="l">cells (${layer.name})</div></div>
+       <div class="stat"><div class="v">${a.donors}</div><div class="l">donors</div></div>
+       <div class="stat"><div class="v">${a.n_states}</div><div class="l">cell states</div></div>
+       <div class="stat"><div class="v">8</div><div class="l">source datasets</div></div></div>
+     <h4 style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--dim);margin:6px 0 4px">Developmental phase coverage</h4>
+     <div class="phasebars">
+       <div style="flex:${pct(a.fetal)};background:#7ee0c0">${a.fetal?((a.fetal/1000).toFixed(0)+'k'):''}</div>
+       <div style="flex:${pct(a.perinatal)};background:#4aa8ff">${a.perinatal?((a.perinatal/1000).toFixed(0)+'k'):''}</div>
+       <div style="flex:${pct(a.adult_aging)};background:#f0b866">${a.adult_aging?((a.adult_aging/1000).toFixed(0)+'k'):''}</div></div>
+     <div class="legend"><span><i style="background:#7ee0c0"></i>embryonic-fetal</span><span><i style="background:#4aa8ff"></i>perinatal</span><span><i style="background:#f0b866"></i>adult-aging</span></div>
+     <h4 style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--dim);margin:20px 0 8px">Cell states & master TFs (DE, log-fold-change)</h4>
+     <table><thead><tr><th style="width:210px">Cell state</th><th>Top state-defining TFs</th></tr></thead><tbody>${stRows}</tbody></table>
+     <h4 style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--dim);margin:20px 0 8px">Source datasets (harmonized to one gene/phase axis)</h4>
+     <table><thead><tr><th>ID</th><th>Dataset</th><th>Phase(s)</th><th>Cells</th><th>Donors</th></tr></thead><tbody>${ds}</tbody></table>
+     <div class="note">Human same-cell RNA+ATAC does not exist before adulthood — this RNA backbone is the substrate; matched multiome (mouse developmental / human adult) is layered in Stage C/F.</div></div></div>`;
+}
+
+
+/* Stage C — GRN inference */
+function renderC(){
+  const layer=DATA.layers[S.layer];
+  const src=layer.states[S.source], tgt=layer.states[S.target];
+  const tfList=(st)=> st? st.master_tfs.slice(0,8).map(t=>`<span class="chip">${esc(t.tf)}</span>`).join(" "):"—";
+  const epiOnly = (S.layer==="epithelial" && isLungRef());
+  return liveHead("Gene-regulatory network — hub regulators",
+     epiOnly?"CellOracle base-GRN + SCENIC+ enhancer-aware (13/16 canonical TFs recovered)":"CellOracle base-GRN per stage")+
+    `<p style="color:var(--mut);margin:0 0 14px;font-size:13px">Per-state regulons inferred from the integrated sub-atlas. The source and target states below anchor the transition whose direction Stage D perturbs along. ${epiOnly?"For lung epithelium the enhancer-aware SCENIC+ route restored FOXA2/SOX9 that promoter-only GRNs miss.":""}</p>
+     <div class="cols">
+       <div class="dpanel" style="margin:0"><div class="dh"><h3 style="font-size:13px">Source hubs · ${esc(S.source)}</h3></div><div class="db"><div class="chips">${tfList(src)}</div></div></div>
+       <div class="dpanel" style="margin:0"><div class="dh"><h3 style="font-size:13px">Target hubs · ${esc(S.target)} ◆</h3></div><div class="db"><div class="chips">${tfList(tgt)}</div></div></div>
+     </div>
+     <div class="note acc" style="margin-top:16px"><b>GRN rewiring principle (from reprogramming landscape):</b> transitions are driven by a hub hand-off — an early network anchored by one TF module rewires into the target-state module. Edge-turnover (Jaccard) localizes where rewiring is sharpest; those transitions are the perturbation-sensitive windows Stage D targets.</div>
+     <div class="note">Two GRN routes: <b>CellOracle</b> (promoter/motif base-GRN, RNA-only — always available) and <b>SCENIC+</b> (enhancer-aware eRegulons — needs matched ATAC, GPU cisTarget DB). The reference lung run used both; enhancer-aware recovered more canonical regulators.</div></div></div>`;
+}
+
+/* Stage D — in-silico reversal → TF recipe */
+function renderD(){
+  if(!(S.layer==="epithelial" && isLungRef())){
+    return liveHead("In-silico reversal — TF recipe","method demonstrated on lung epithelial AT2→Tip")+
+      genericDNote()+`</div></div>`;
+  }
+  const rc=DATA.refcase;
+  const recipeRows=rc.recipe.map(r=>{
+    const act=/ACTIVATE/i.test(r.action);
+    return `<tr><td class="tf">${esc(r.tf)}</td>
+      <td><span class="pill ${act?'p-act':'p-ko'}">${act?'ACTIVATE':'KNOCK-OUT'}</span></td>
+      <td style="font-size:11.5px">${esc(r.rationale)}</td>
+      <td style="font-size:11px;color:var(--dim)">${esc(r.grn)}</td>
+      <td><span class="pill ${/HIGH/i.test(r.conf)?'p-hi':'p-med'}">${esc(r.conf.split('—')[0].trim())}</span></td></tr>`;
+  }).join("");
+  const modRows=rc.modules.map(mm=>`<tr><td style="font-size:12px">${esc(mm.module)}</td>
+    <td class="tf">${esc(mm.tf)}</td><td style="font-size:11.5px;color:var(--mut)">${esc(mm.role)}</td>
+    <td style="font-size:11px;color:var(--dim)">${esc(mm.evidence)}</td></tr>`).join("");
+  return liveHead("In-silico reversal — precision TF recipe","AT2 → fetal distal-tip · CellOracle KO/OE projection")+
+    `<p style="color:var(--mut);margin:0 0 12px;font-size:13px">In-silico KO/OE screen projected onto the AT2→Tip transition vector, split into <b>activate</b> (re-open progenitor program) and <b>knock-out</b> (release mature/alternative identity) calls.</p>
+     <table><thead><tr><th>TF</th><th>Intervention</th><th>Rationale</th><th>GRN evidence</th><th>Conf.</th></tr></thead><tbody>${recipeRows}</tbody></table>
+     <h4 style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--dim);margin:20px 0 8px">Stage-gated module scheme (measured GRN → lung nomination)</h4>
+     <table><thead><tr><th>GRN module</th><th>TF</th><th>Role</th><th>Evidence class</th></tr></thead><tbody>${modRows}</tbody></table>
+     <div class="note">The scheme replaces constitutive OSKM with stage-gated modules. Key design point from the reprogramming landscape: the pluripotency/progenitor lock-in is a <b>distributed network property</b>, not strongly single-TF-drivable — hence combinations.</div></div></div>`;
+}
+function genericDNote(){
+  return `<p style="color:var(--mut);margin:0 0 12px;font-size:13px">The reversal screen ranks KO/OE perturbations by how far they move the source state along the transition vector toward the progenitor target. Activate the target-state master TFs (from Stage B/C); knock-out the source-state maturation masters. The fully-worked example is lung epithelial AT2→fetal distal-tip.</p>
+  <div class="note acc">Select <b>Lung · Epithelial</b> to see the real 11-TF recipe (SOX9/LEF1/ETV5 activate; CEBPA/FOXJ1/RFX2-3 knock-out) with GRN evidence and confidence.</div>`;
+}
+
+/* Stage E — small-molecule mirror */
+function renderE(){
+  if(!(S.layer==="epithelial" && isLungRef())){
+    return liveHead("Small-molecule mirror","method demonstrated on lung epithelial")+
+      `<p style="color:var(--mut);margin:0;font-size:13px">Each stage signature is mapped to LINCS L1000 compounds and confirmed in Tahoe-100M. Select <b>Lung · Epithelial</b> for the ranked 55-compound nomination + curated organ cocktail.</p></div></div>`;
+  }
+  const rc=DATA.refcase;
+  const maxSup=Math.max(...rc.compounds.map(c=>c.supAT2));
+  const cRows=rc.compounds.slice(0,14).map(c=>`<tr>
+    <td class="tf" style="font-weight:600">${esc(c.name)}</td>
+    <td style="font-size:11.5px">${esc(c.moa)}</td>
+    <td style="font-size:11px;color:var(--dim)">${esc(c.targets)}</td>
+    <td><span class="bar"><i style="width:${Math.round(100*c.supAT2/maxSup)}%"></i></span> <span class="mono" style="font-size:11px">${c.supAT2}</span></td>
+    <td class="${c.approved==='yes'?'p-yes':'p-no'}">${c.approved==='yes'?'approved':'—'}</td></tr>`).join("");
+  const curRows=rc.curated_sm.map(c=>`<tr><td class="tf">${esc(c.name)}</td>
+    <td style="font-size:12px">${esc(c.pathway)}</td>
+    <td style="font-size:11px;color:var(--dim)">${esc(c.source)}</td>
+    <td><span class="pill ${/HIGH/i.test(c.conf)?'p-hi':'p-med'}">${esc(c.conf.split('(')[0].trim())}</span></td></tr>`).join("");
+  return liveHead("Small-molecule mirror — compound nomination","LINCS L1000 → Tahoe-100M single-cell confirmation")+
+    `<p style="color:var(--mut);margin:0 0 12px;font-size:13px">Compounds whose transcriptional signature mimics the reprogramming objective (induce Tip, suppress AT2, suppress club/ciliated). Ranked by AT2-suppression connectivity; approval status from Tahoe metadata.</p>
+     <table><thead><tr><th>Compound</th><th>MoA</th><th>Targets</th><th>Suppress-AT2 connectivity</th><th>Status</th></tr></thead><tbody>${cRows}</tbody></table>
+     <h4 style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--dim);margin:20px 0 8px">Curated organ cocktail (measured prior + lung-established)</h4>
+     <table><thead><tr><th>Compound</th><th>Pathway</th><th>Source</th><th>Conf.</th></tr></thead><tbody>${curRows}</tbody></table>
+     <div class="note">LINCS lacks canonical reprogramming reagents (CHIR99021, RepSox, forskolin), so connectivity recovers shared mechanisms (DNMT, RTK/EGFR, mTOR, HDAC) but the curated row adds organ-established stemness triggers absent from the library.</div></div></div>`;
+}
+
+/* Stage F — PertFormer fate validation */
+function renderF(){
+  if(!(S.layer==="epithelial" && isLungRef())){
+    return liveHead("Deep-learning fate validation","method demonstrated on lung epithelial AT2→Tip")+
+      `<p style="color:var(--mut);margin:0;font-size:13px">DNA+ATAC inputs for {adult, progenitor, TF-knock-in} are scored by PertFormer (3B params, A100); fate-proximity Δ = cos(KI, target) − cos(ref, target). Select <b>Lung · Epithelial</b> for the real mouse↔human comparison.</p></div></div>`;
+  }
+  const f=DATA.refcase.fate;
+  function fateCard(sp){
+    const dt=f.distalTF[sp], ok=f.OSKM[sp];
+    const sel = (sp===S.species);
+    const bar=(v,col)=>`<div class="fatebar"><div class="lab"><span>${v.label}</span><span class="mono">${v.val.toFixed(3)}</span></div>
+      <div class="track"><div class="fill" style="width:${Math.round(v.val*100)}%;background:${col}"></div></div></div>`;
+    const dpos=dt.delta>=0, opos=ok.delta>=0;
+    return `<div class="fatecard" style="${sel?'border-color:var(--acc);box-shadow:0 0 0 1px var(--acc)':''}"><h4>${sp==='human'?'Human':'Mouse'} · AT2 → fetal distal-tip ${sel?'<span class="badge b-impl" style="margin-left:auto">selected</span>':''}</h4>
+      ${bar({label:'Reference (unedited AT2)',val:dt.ref},'#6b7684')}
+      ${bar({label:'OSKM knock-in',val:ok.ki},'#4aa8ff')}
+      ${bar({label:'Distal-TF knock-in (SOX9/NKX2-1/ETV5/ETV4)',val:dt.ki},'#7ee0c0')}
+      <div style="display:flex;justify-content:space-between;margin-top:12px;font-size:12px">
+        <span style="color:var(--mut)">OSKM Δ <span class="delta ${opos?'pos':'neg'}">${opos?'+':''}${ok.delta.toFixed(3)}</span></span>
+        <span style="color:var(--mut)">Distal-TF Δ <span class="delta ${dpos?'pos':'neg'}">${dpos?'+':''}${dt.delta.toFixed(3)}</span></span></div></div>`;
+  }
+  const panel=DATA.refcase.fate.panel.map(g=>`<span class="chip">${esc(g)}</span>`).join(" ");
+  return liveHead("Deep-learning fate validation — PertFormer","cosine fate-proximity · 21-gene panel · Modal A100")+
+    `<p style="color:var(--mut);margin:0 0 14px;font-size:13px">In-silico motif knock-in opens accessible peaks bearing each TF's motif (ATAC-only edit); the 3B-parameter DNA+ATAC→expression model predicts the resulting program; fate-proximity Δ measures the move toward the progenitor target.</p>
+     <div class="fate">${(S.species==='mouse'?['mouse','human']:['human','mouse']).map(fateCard).join('')}</div>
+     <div class="note acc" style="margin-top:16px"><b>Result:</b> in human, the lung-specific distal-TF cocktail moves AT2 ~93% farther toward distal-progenitor fate than OSKM (Δ +0.107 vs +0.055) — the largest fate shift in the project, winning by <b>specificity</b> (it doesn't spuriously fire surfactant/pluripotency genes). Mouse AT2 already sits close to its E17.5 tip, so it reads as a specificity control.</div>
+     <h4 style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--dim);margin:18px 0 8px">Fate-readout gene panel (9 distal + 8 AT2 + 4 OSKM)</h4>
+     <div class="chips">${panel}</div>
+     <div class="note">Neither cocktail reaches a full fate switch (the model's somatic→iPSC benchmark hit ~0.75 from ~0.23); distal-TF at 0.66→0.76 is strong partial reprogramming. All predictions are in-silico hypotheses requiring wet-lab validation.</div></div></div>`;
+}
+
+
+/* ---------- wiring ---------- */
+function bind(){
+  el("selOrgan").addEventListener("change",e=>{
+    S.organ=e.target.value; rebuildLayer(); rebuildStates(); renderStage();
+  });
+  el("selLayer").addEventListener("change",e=>{ S.layer=e.target.value; rebuildStates(); renderStage(); });
+  el("selSource").addEventListener("change",e=>{ S.source=e.target.value; renderTransitionBox(); renderStage(); });
+  el("selTarget").addEventListener("change",e=>{ S.target=e.target.value; renderTransitionBox(); renderStage(); });
+  document.querySelectorAll("#segSpecies button").forEach(b=>{
+    b.addEventListener("click",()=>{ S.species=b.dataset.v; renderSpecies(); renderStage(); });
+  });
+  el("provbtn").addEventListener("click",()=>{ el("provModal").classList.toggle("hidden"); });
+}
+function boot(){ initSelectors(); renderRibbon(); renderStage(); bind(); }
+document.addEventListener("DOMContentLoaded",boot);
+
+</script>
+</body>
+</html>

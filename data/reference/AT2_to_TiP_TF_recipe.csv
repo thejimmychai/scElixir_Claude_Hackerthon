@@ -1,0 +1,12 @@
+TF,Intervention,Rationale_expression,GRN_evidence,Note,Confidence
+SOX9,ACTIVATE (OE/CRISPRa),"distal tip master; TiP z=1.67, negative in ciliated (-0.71)",in enhancer GRN (197 targets); KO→AT2l/TiP axis,Restored by enhancer GRN,"HIGH — TiP-specific, ciliated-negative"
+LEF1,ACTIVATE (OE/CRISPRa),"Wnt effector; TiP z=1.58, strongly AT2-negative (-1.03)",in GRN,Wnt maintains distal tip niche,"HIGH — most TiP-specific, strongly AT2-negative"
+ETV5,ACTIVATE (OE/CRISPRa),FGF10-FGFR2 effector; TiP z=1.30,in GRN (21 targets; underpowered),FGF sustains tip progenitors,MEDIUM — shared TiP/AT2 (also maintains AT2)
+FOXP2,ACTIVATE (support),distal epithelial; TiP z=1.11,in GRN,tip/distal identity,MEDIUM — modest specificity
+CEBPA,KNOCK OUT (CRISPRi/KO),AT2 maturation master; AT2l z=1.71,in GRN (26 targets),releases mature AT2 identity,HIGH — AT2-specific maturation master
+PPARG,KNOCK OUT (CRISPRi/KO),AT2 lipid/surfactant; AT2l z=1.49,in GRN,AT2 surfactant metabolism,MEDIUM — shared TiP/AT2 (KO may hurt TiP too)
+FOXJ1,KNOCK OUT (CRISPRi/KO),ciliated master; Cili z=2.47,in GRN (391 targets); KO→Cili,blocks ciliated fate,HIGH — ciliated-specific
+MYB,KNOCK OUT (CRISPRi/KO),ciliogenesis; Cili z=2.47,in GRN,ciliated differentiation,HIGH — ciliated-specific
+RFX2,KNOCK OUT (CRISPRi/KO),ciliogenesis (RFX family); Cili z=2.07,in GRN (499 targets),blocks ciliated fate,HIGH — ciliated-specific
+RFX3,KNOCK OUT (CRISPRi/KO),ciliogenesis (RFX family); Cili z=2.29,in GRN (532 targets); KO→Cili,blocks ciliated fate,HIGH — ciliated-specific
+EHF,KNOCK OUT (CRISPRi/KO),club/secretory (proximal airway),in GRN,suppresses club/secretory,MEDIUM — club/secretory

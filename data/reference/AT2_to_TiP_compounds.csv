@@ -1,0 +1,56 @@
+Compound,induce_TiP_score,suppress_AT2_score,suppress_clubcili_score,n_objectives_hit,min_gene_overlap,Tahoe_MoA,Tahoe_targets,Human_approved,PubChem_CID
+everolimus,7.0,226.1,2.9,3,1.0,MTOR inhibitor,"MTOR, FKBP1A",yes,6442177.0
+belinostat,26.3,216.2,62.0,3,1.0,HDAC inhibitor,HDAC6,yes,6918638.0
+ponatinib,9.8,75.2,20.0,3,1.0,Multi-TK inhibitor,"ABL1, PDGFRA, KDR, FGFR1, SRC, KIT",yes,24826799.0
+dabrafenib,2.0,52.7,51.7,3,1.0,RAF inhibitor,"BRAF, RAF1",yes,44462760.0
+budesonide,2.0,46.2,8.9,3,1.0,Glucocorticoid receptor agonist,NR3C1,yes,5281004.0
+valdecoxib,1.0,40.6,2.6,3,1.0,Cyclooxygenase inhibitor,PTGS2,no,119607.0
+regorafenib,21.3,34.4,23.9,3,3.0,Multi-TK inhibitor,"BRAF, FLT1, FLT4, KDR, KIT, PDGFRB, RAF1, RET, TEK",yes,11167602.0
+palbociclib,40.9,34.3,117.2,3,2.0,CDK inhibitor,"CDK4, CDK6",yes,5330286.0
+sunitinib,33.7,24.0,69.0,3,1.0,Multi-TK inhibitor,"KDR, PDGFRB",yes,5329102.0
+triamcinolone,1.4,20.6,0.9,3,1.0,Glucocorticoid receptor agonist,NR3C1,yes,31307.0
+homoharringtonine,4.1,14.4,0.6,3,1.0,Protein synthesis inhibitor,,yes,285033.0
+clofarabine,1.8,13.8,2.7,3,1.0,DNA synthesis/repair inhibitor,,yes,119182.0
+dinaciclib,6.0,10.4,17.2,3,1.0,CDK inhibitor,"CDK1, CDK2, CDK5, CDK9",no,46926350.0
+gefitinib,9.4,8.9,6.2,3,1.0,EGFR/ERBB inhibitor,EGFR,yes,123631.0
+crizotinib,4.1,7.5,3.8,3,1.0,Multi-TK inhibitor,"ALK, MET, ROS1",yes,11626560.0
+afatinib,0.5,7.0,8.7,3,1.0,EGFR/ERBB inhibitor,"EGFR, ERBB2",yes,10184653.0
+vemurafenib,3.6,6.6,25.8,3,1.0,RAF inhibitor,BRAF,yes,42611257.0
+dexamethasone,7.4,5.1,18.0,3,1.0,Glucocorticoid receptor agonist,NR3C1,yes,5743.0
+neratinib,17.9,4.4,52.5,3,1.0,EGFR/ERBB inhibitor,"EGFR, ERBB2",yes,9915743.0
+vandetanib,9.4,4.3,1.1,3,1.0,Multi-TK inhibitor,"EGFR, KDR",yes,3081361.0
+trametinib,10.8,3.4,54.6,3,2.0,MEK inhibitor,"MAP2K1, MAP2K2",yes,11707110.0
+mebendazole,8.3,3.2,0.9,3,1.0,Microtubule inhibitor,"TUBA1A, TUBA1B, TUBA1C, TUBB, TUBB1, TUBB2A, TUBB3, TUBB4A, TUBB4B, TUBB6",yes,4030.0
+penfluridol,1.0,2.5,4.6,3,1.0,unclear,DRD2,yes,33630.0
+clobetasol propionate,14.5,2.1,1.8,3,1.0,unclear,"CYP3A5,CYP3A4",yes,32798.0
+amsacrine,3.8,1.9,0.3,3,1.0,DNA synthesis/repair inhibitor,TOP2A,yes,2179.0
+mifepristone,1.7,1.1,0.7,3,1.0,unclear,"NR3C1, PGR",yes,55245.0
+AZD-8055,3.9,0.5,0.3,3,1.0,MTOR inhibitor,MTOR,no,25262965.0
+rapamycin,2.0,11.5,0.0,2,1.0,MTOR inhibitor,"MTOR, FKBP1A",yes,5284616.0
+digitoxin,2.8,8.9,0.0,2,2.0,unclear,,no,441207.0
+paclitaxel,0.0,8.7,1.1,2,1.0,Microtubule inhibitor,,yes,36314.0
+decitabine,109.8,7.8,0.0,2,1.0,DNA methyltransferase inhibitor,"DNMT1, DNMT3A, DNMT3B",yes,451668.0
+erlotinib,0.0,6.6,17.4,2,1.0,EGFR/ERBB inhibitor,EGFR,yes,176870.0
+triclosan,1.1,5.6,0.0,2,1.0,unclear,,no,5564.0
+olaparib,7.7,5.4,0.0,2,1.0,DNA synthesis/repair inhibitor,"PARP1, PARP2",yes,23725625.0
+piroxicam,4.1,5.3,0.0,2,1.0,Cyclooxygenase inhibitor,"PTGS1, PTGS2",yes,54676228.0
+cilostazol,6.6,4.9,0.0,2,1.0,unclear,PDE3A,yes,2754.0
+celecoxib,0.0,4.4,3.0,2,1.0,Cyclooxygenase inhibitor,PTGS2,yes,2662.0
+menadione,2.0,4.2,0.0,2,1.0,unclear,,no,4055.0
+docetaxel,1.4,3.7,0.0,2,1.0,Microtubule inhibitor,,yes,148124.0
+pimozide,4.1,3.5,0.0,2,1.0,unclear,"DRD2, DRD3",yes,16362.0
+auranofin,3.8,3.3,0.0,2,2.0,unclear,"TXNRD1, TXNRD2",yes,24199313.0
+cytarabine,1.2,2.9,0.0,2,1.0,DNA synthesis/repair inhibitor,,yes,6253.0
+fulvestrant,0.0,23.2,0.0,1,2.0,unclear,ESR1,yes,104741.0
+ivermectin,0.0,19.9,0.0,1,2.0,unclear,,yes,6321424.0
+vincristine,0.0,10.5,0.0,1,2.0,Microtubule inhibitor,,yes,249332.0
+brimonidine,0.0,6.6,0.0,1,1.0,Adrenoceptor agonist,"ADRA2A, ADRA2B, ADRA2C",yes,2435.0
+GSK1059615,0.0,5.4,0.0,1,1.0,PI3K/AKT inhibitor,"PIK3CA, PIK3CB, PIK3CD, PIK3CG, MTOR",no,23582824.0
+artesunate,0.0,4.9,0.0,1,1.0,JAK/STAT inhibitor,,yes,6917864.0
+gemcitabine,0.0,3.9,0.0,1,1.0,DNA synthesis/repair inhibitor,,yes,60750.0
+finasteride,0.0,1.9,0.0,1,1.0,unclear,SRD5A2,yes,57363.0
+carbamazepine,0.0,1.6,0.0,1,1.0,HDAC inhibitor,,yes,2554.0
+cyclosporin a,11.6,0.0,0.0,1,2.0,unclear,"PPP3CA, PPP3CB, PPP3CC",yes,5284373.0
+flutamide,0.0,0.0,6.6,1,1.0,Androgen receptor antagonist,AR,yes,3397.0
+resveratrol,0.0,0.0,3.5,1,1.0,unclear,SIRT1,no,445154.0
+terfenadine,2.7,0.0,0.0,1,1.0,unclear,HRH1,no,5405.0

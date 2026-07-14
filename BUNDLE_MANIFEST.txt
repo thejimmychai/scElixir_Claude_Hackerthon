@@ -1,0 +1,27 @@
+# repro-pipeline-build — bundle manifest
+# exported 2026-07-13 from Claude Science project artifacts
+# size(bytes)  sha256[:12]  path
+
+      3648  e1902122e7a0  backend/engine/celloracle_local.py
+      9651  2b3c8cb66503  backend/engine/oskm_ki_and_readout.py
+      4388  640dbe733d9f  backend/engine/run_epi_grn.py
+      8355  df8f29ea5ec8  backend/engine/run_pertformer.py
+      9663  2bda0539d68b  backend/engine/tf_to_drug_connectivity.py
+     19036  f3bd00c33ccc  data/reference/ALL_lineage_state_TFs.csv
+      1679  371dae245dfd  data/reference/AT2_to_TiP_TF_recipe.csv
+      4175  9b322499168f  data/reference/AT2_to_TiP_compounds.csv
+       907  316af0493d12  data/reference/AT2_to_TiP_tahoe_validation.csv
+    955769  7879641a5b3a  data/reference/GRN_network_scores_enhancer.csv
+      1364  f0e514cdfad4  data/reference/alternative_stagewise_TF_scheme.csv
+      1017  6cd4fbcb5309  data/reference/distaltf_fate_proximity_readout.json
+       936  9a3d34b42e53  data/reference/fate_proximity_readout.json
+     23311  e46ad4e1142b  data/reference/insilico_TF_perturbation_screen.csv
+      1220  fc239c5f47e6  data/reference/lung_AT2_to_progenitor_TF_scheme.csv
+      1800  7a1f0e78bab2  data/reference/lung_AT2_to_progenitor_small_molecules.csv
+      3185  a4b468439dc6  data/reference/pertformer_io_contract.json
+     27409  5529554e151c  data/reference/perturbseq_datasets_catalog.csv
+     30138  960376f2dc14  docs/CLAUDE_CODE_HANDOFF.md
+     12178  ed9da74a873b  docs/CONSTRUCTION_README.md
+      3914  3aadb3caf6b2  docs/PIPELINE_README.md
+     73883  bb434946fa1d  frontend/reprogramming_pipeline.html
+     40125  e14a57cb21b7  frontend/seed/pipeline_seed_data.json

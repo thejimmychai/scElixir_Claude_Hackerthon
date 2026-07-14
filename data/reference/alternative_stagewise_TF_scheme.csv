@@ -1,0 +1,11 @@
+dataset,transition,combo,combo_size,combo_projection,best_single,best_single_projection,combo_gain_over_single,contains_OSKM_factor,novel_TFs_vs_OSKM
+human_OSKM,fibroblast->initiation,POU5F1+NANOG+SALL4,3,10.951,POU5F1,6.5243,4.4267,['POU5F1'],"['NANOG', 'SALL4']"
+human_OSKM,initiation->maturation_MET,JUNB+NANOG+CEBPB,3,29.3589,JUNB,15.6768,13.6821,[],"['JUNB', 'NANOG', 'CEBPB']"
+human_OSKM,maturation_MET->stabilization_pluripotent,ZIC2+FOXD3+FOXA2,3,0.0286,ZIC2,0.0176,0.011,[],"['ZIC2', 'FOXD3', 'FOXA2']"
+mouse_OSKM,fibroblast->initiation,Id2+Mybl2+Klf5,3,5.0286,Id2,2.889,2.1396,[],"['Id2', 'Mybl2', 'Klf5']"
+mouse_OSKM,initiation->maturation_intermediate,Egr1+Klf2+Bhlhe40,3,3.849,Egr1,2.0965,1.7525,[],"['Egr1', 'Klf2', 'Bhlhe40']"
+mouse_OSKM,maturation_intermediate->stabilization_pluripotent,Mybl2+Nanog+Klf5,3,10.4438,Mybl2,5.2697,5.1741,[],"['Mybl2', 'Nanog', 'Klf5']"
+human_chemical,fibroblast->initiation,FOS+ZIC2+POU5F1,3,19.9484,FOS,11.5951,8.3533,['POU5F1'],"['FOS', 'ZIC2']"
+human_chemical,initiation->XEN_like_intermediate,KLF2+ATF3+POU5F1,3,6.1212,KLF2,3.596,2.5252,['POU5F1'],"['KLF2', 'ATF3']"
+human_chemical,XEN_like_intermediate->MET_maturation,FOS+HES1+ATF3,3,43.4375,FOS,23.9701,19.4674,[],"['FOS', 'HES1', 'ATF3']"
+human_chemical,MET_maturation->pluripotent,POU5F1+SOX2+ZIC2,3,3.8741,POU5F1,1.9915,1.8826,"['POU5F1', 'SOX2']",['ZIC2']

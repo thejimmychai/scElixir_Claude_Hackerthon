@@ -1,0 +1,51 @@
+{
+  "model": {
+    "name": "PertFormer (internal: CREformer)",
+    "repo": "https://github.com/alibaba/damo-pertformer",
+    "weights_hf": "GenomicIntelligenceDamoAcademy/pertformer (~12.8 GB, 11 .pkl files, Apache-2.0)",
+    "params": "3B",
+    "recommended_hw": "NVIDIA A100 80GB (authors advise against desktop/CPU)",
+    "online_app": "https://pertformer.ibreed.cn",
+    "preprint_doi": "10.1101/2024.12.19.629561"
+  },
+  "modality": {
+    "INPUT": "DNA sequence (reference genome) + ATAC accessibility signal (bigWig), per gene",
+    "OUTPUT": "single scalar = predicted expression of that gene",
+    "note": "There is NO expression encoder. scRNA cannot be an input; it is only the OUTPUT/readout."
+  },
+  "granularity": "per-GENE forward pass over all peaks within +/-300 kb of the gene TSS (<=150 peaks; padded to 150)",
+  "per_peak_input": {
+    "peak_id_line": "starts with '>' e.g. '>chrX_48648355_48648753'",
+    "dna_line": "exactly 1029 bp (A/C/G/T), centered on the peak summit",
+    "atac_line": "exactly 1029 whitespace-separated floats = bigWig signal at the SAME 1029 genomic positions as the DNA",
+    "file_layout": "3 lines per peak (ID, DNA, ATAC); n peaks -> 3n lines; peaks ordered along genome"
+  },
+  "tokenization": {
+    "dna": "overlapping 6-mers via tokenizer(seq,6) -> 1029-6+1 = 1024 tokens -> mapped by kmer_dict (4100 vocab: [PAD]=0,[CLS]=1,[SEP]=2,[MASK]=3, then 4096 6-mers) -> reshaped 8x128",
+    "atac": "pre_pro(sig,6): 6-bp moving-average -> 1024 values -> discretized into 36 bins (0->1, ... , >=200->36) -> reshaped 8x128",
+    "note": "1024 = 8 sub-blocks x 128; Encoder-1 runs per sub-block, Encoder-2 over the 8 blocks + attention-pool -> 1 vector/peak, Encoder-3 over <=150 peaks, FF head -> scalar."
+  },
+  "sidecar_params_per_gene": {
+    "tss_loc": "integer index (0-based) of the peak closest to the gene TSS within the ordered peak list",
+    "direction": "'+' or '-' gene strand; sets the TSS-distance (pos3) embedding direction"
+  },
+  "perturbation_recipe": {
+    "edit_target": "ATAC signal vector ONLY (DNA sequence and peak set are IDENTICAL between Ref and perturbed files)",
+    "KO": "set the target peak's 1029 ATAC values to 0 (validated example: enhancer chrX_48761672_48762478, org max 651.9 -> ko 0.0; exactly 1 peak differs between shipped info_ko_org.txt and info_ko_ko.txt)",
+    "KI_OSKM": "per paper p.9: 'inducing the highest ATAC peak flanking the 300,000-bp of the TSS of targeted gene to the loci with OSKM motifs' => at peaks bearing OCT4/SOX2/KLF4/MYC motifs, raise the ATAC signal to the window's highest-peak profile (mimicking OSKM binding+opening those loci)",
+    "readout_for_fate": "run Ref and perturbed inputs for the full readout gene panel -> two predicted-expression vectors; cell-state proximity = cosine similarity of predicted expression to the TARGET state's profile (paper Fig 4B/4C; somatic->iPSC example: cos sim to hESC rose ~0.23 -> ~0.75 after OSKM-KI)"
+  },
+  "constants": {
+    "dna_len": 1029,
+    "atac_len": 1029,
+    "kmer_k": 6,
+    "n_dna_tokens": 1024,
+    "subblock": [
+      8,
+      128
+    ],
+    "max_peaks_per_gene": 150,
+    "atac_bins": 36,
+    "embed_dim": 2048
+  }
+}
