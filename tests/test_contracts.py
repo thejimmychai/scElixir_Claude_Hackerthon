@@ -12,7 +12,7 @@ import unittest
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from backend import store  # noqa: E402
+from backend import artifacts  # noqa: E402
 from backend.app import route_get, route_post  # noqa: E402
 
 
@@ -167,9 +167,11 @@ class Jobs(unittest.TestCase):
 
 class Store(unittest.TestCase):
     def test_engine_params_change_key(self):
-        k1 = store.make_key("F", "lung", "epithelial", "AT2", "Tip (fetal)", "human", {"score_quantile": 0.90})
-        k2 = store.make_key("F", "lung", "epithelial", "AT2", "Tip (fetal)", "human", {"score_quantile": 0.95})
-        self.assertNotEqual(k1, k2)  # guardrail 5: engine params fold into the key
+        i1 = artifacts.identity_for("F", "lung", "epithelial", "AT2", "Tip (fetal)", "human",
+                                    engine_params={"score_quantile": 0.90})
+        i2 = artifacts.identity_for("F", "lung", "epithelial", "AT2", "Tip (fetal)", "human",
+                                    engine_params={"score_quantile": 0.95})
+        self.assertNotEqual(artifacts.key_for(i1), artifacts.key_for(i2))  # guardrail 5
 
 
 if __name__ == "__main__":

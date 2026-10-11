@@ -6,44 +6,29 @@ GET /stage/A?organ=lung
 Backing: perturbseq_datasets_catalog.csv (36 rows) + the TF->drug connectivity
 engine (tf_to_drug_connectivity.py). Every catalog row carries a recorded
 verify_status; the response exposes it verbatim rather than asserting a blanket
-"verified".
+"verified". The engine health comes from the shared capability report.
 """
 
 from __future__ import annotations
 
-import importlib
-import os
 from typing import Any, Dict
 
-from .. import config, data_loader, registry
+from .. import capabilities, data_loader, registry
 
 
 def _drug_engine_health() -> Dict[str, Any]:
-    """Report whether the connectivity engine can run a live query here.
-
-    The engine needs requests/numpy/pandas/scipy plus network reachability to
-    maayanlab.cloud (Enrichr/LINCS) and datasets-server.huggingface.co (Tahoe).
-    We report the true local state instead of hard-coding "ready".
-    """
-    engine_present = os.path.exists(os.path.join(config.ENGINE_DIR, "tf_to_drug_connectivity.py"))
-    missing = []
-    for mod in ("requests", "numpy", "pandas", "scipy"):
-        try:
-            importlib.import_module(mod)
-        except ImportError:
-            missing.append(mod)
-    live = engine_present and not missing
+    eng = capabilities.engine_report()["lincs_tahoe"]
     return {
         "libraries": ["LINCS L1000 (via Enrichr)"],
         "confirm": "Tahoe-100M",
         "engine_module": "backend/engine/tf_to_drug_connectivity.py",
-        "status": "ready" if engine_present else "missing",
-        "live_query_available": live,
-        "missing_dependencies": missing,
+        "status": "ready" if eng["available"] else "unavailable",
+        "live_query_available": eng["available"],
+        "missing_dependencies": eng["missing_modules"],
+        "network": eng["network"],
         "note": (
-            "Connectivity engine wired for Stage E. Live LINCS/Tahoe query "
-            "requires the listed packages + network access; when unavailable the "
-            "cached reference nominations are served."
+            "Live LINCS/Tahoe queries need the listed Python packages and network access "
+            "to the hosts above. The reference nominations are always served from the cache."
         ),
     }
 

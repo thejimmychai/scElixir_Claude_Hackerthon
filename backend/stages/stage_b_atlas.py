@@ -4,25 +4,25 @@ GET  /stage/B?organ=lung&layer=epithelial
   -> { atlas, states, source_datasets, artifact_uri }
 POST /stage/B/run { organ, layer } -> { job_id }
 
-Backing: the integrated *_subatlas.h5ad (external, multi-GB — not in the bundle)
-summarised by the seed layer stats + ALL_lineage_state_TFs.csv. The read returns
-the cached summary; a fresh recompute (scVI/scANVI) is a real GPU-scale job and
-is refused honestly when no cached result exists.
+Backing: the lung reference atlas summary (seed layer stats + ALL_lineage_state_TFs.csv),
+or an organ bundle's layers for any other organ (organ_bundles.py). The integrated
+*_subatlas.h5ad files are external and multi-GB; a fresh scVI/scANVI recompute is
+refused honestly with the list of what is missing.
 """
 
 from __future__ import annotations
 
 from typing import Any, Dict
 
-from .. import data_loader, registry, store
+from .. import config, data_loader, registry
 from ..jobs import ComputeUnavailable
 
 
-def _states_with_padj(layer_id: str) -> Dict[str, Any]:
-    """Seed states (role + top master TFs), enriched with padj where available."""
-    ds = data_loader.get()
-    layer = ds.layers[layer_id]
-    padj_table = ds.state_tfs_table().get(ds.layers[layer_id]["name"].lower(), {})
+def _states_with_padj(organ: str, layer_id: str, layer: Dict[str, Any]) -> Dict[str, Any]:
+    """States (role + top master TFs); lung states are enriched with padj from the full table."""
+    padj_table = {}
+    if organ == config.REFERENCE_CASE["organ"]:
+        padj_table = data_loader.get().state_tfs_table().get(layer["name"].lower(), {})
     out: Dict[str, Any] = {}
     for state_name, state in layer["states"].items():
         padj_lookup = {r["tf"]: r["padj"] for r in padj_table.get(state_name, [])}
@@ -45,12 +45,13 @@ def get(organ: str = "lung", layer: str = "epithelial") -> Dict[str, Any]:
             "layer": layer,
             "note": o.get("note", "Planned organ — developmental atlas not yet assembled."),
         }
-    if not registry.layer_exists(organ, layer):
+    ld = registry.layer_data(organ, layer)
+    if ld is None:
         return {"status": "not_computed", "organ": organ, "layer": layer, "note": "Unknown cell layer."}
 
     ds = data_loader.get()
-    l = ds.layers[layer]
-    a = l["atlas"]
+    a = ld["atlas"]
+    is_reference = organ == config.REFERENCE_CASE["organ"]
     return {
         "status": "cached",
         "organ": organ,
@@ -65,9 +66,9 @@ def get(organ: str = "lung", layer: str = "epithelial") -> Dict[str, Any]:
                 "adult_aging": a["adult_aging"],
             },
         },
-        "states": _states_with_padj(layer),
-        "source_datasets": ds.dev_datasets,
-        "artifact_uri": f"external://artifact-store/{layer}_subatlas.h5ad",
+        "states": _states_with_padj(organ, layer, ld),
+        "source_datasets": ds.dev_datasets if is_reference else ld.get("source_datasets", []),
+        "artifact_uri": f"external://artifact-store/{organ}/{layer}_subatlas.h5ad",
         "artifact_status": "external_not_in_bundle",
         "method_note": (
             "Per-lineage scVI/scANVI integration, raw counts retained; states via "
@@ -79,14 +80,10 @@ def get(organ: str = "lung", layer: str = "epithelial") -> Dict[str, Any]:
 def run(job) -> Dict[str, Any]:
     p = job.params
     organ, layer = p.get("organ", "lung"), p.get("layer", "epithelial")
-    if registry.stage_status("B", organ, layer) == "cached":
+    if registry.reference_cached("B", organ, layer):
         job.progress = "loading cached sub-atlas summary"
-        result = get(organ, layer)
-        key = store.make_key("B", organ, layer, engine_params=p.get("engine_params"))
-        result["artifact_uri"] = store.put(key, result)
-        return result
+        return get(organ, layer)
     raise ComputeUnavailable(
-        f"No cached atlas for organ='{organ}', layer='{layer}'. Assembling it requires "
-        "CELLxGENE/GEO retrieval + scVI/scANVI integration (CPU->GPU at scale), which is "
-        "not available in this bundle. Only the lung reference atlas is cached."
+        f"No cached atlas for organ='{organ}', layer='{layer}'. Assembling it needs the source "
+        "datasets and an scVI/scANVI integration; see the requirements listed for this stage."
     )

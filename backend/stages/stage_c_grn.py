@@ -1,20 +1,20 @@
 """Stage C — GRN inference (async job).
 
-GET  /stage/C?organ=lung&layer=epithelial
-  -> { hubs, route, n_edges, artifact_uri }
+GET  /stage/C?organ=lung&layer=epithelial&route=scenicplus
+  -> { hubs, n_clusters, n_edges, route, candidate_hubs, ... }
 POST /stage/C/run { organ, layer, route } -> { job_id }
 
-Backing: GRN_network_scores_enhancer.csv (the epithelial enhancer-aware run) +
-epi_links.celloracle.links (external). Only the epithelial GRN was actually
-inferred, so other layers report not_computed and surface only their candidate
-regulators (Stage-B master TFs) rather than fabricated centrality scores.
+Backing: GRN_network_scores_enhancer.csv (the SCENIC+ enhancer-aware run for lung
+epithelial). The CellOracle route has no cached GRN, so it reports not_computed
+for every layer. Other layers surface only their candidate regulators (Stage-B
+master TFs) rather than fabricated centrality scores.
 """
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
-from .. import data_loader, registry, store
+from .. import config, data_loader, registry
 from ..jobs import ComputeUnavailable
 
 TOP_HUBS = 40
@@ -67,10 +67,9 @@ def _hub_table() -> Dict[str, Any]:
     }
 
 
-def _candidate_hubs(layer: str, source: Optional[str], target: Optional[str]) -> Dict[str, Any]:
-    ds = data_loader.get()
-    layer_obj = ds.layers.get(layer, {})
-    states = layer_obj.get("states", {})
+def _candidate_hubs(organ: str, layer: str, source: Optional[str], target: Optional[str]) -> Dict[str, Any]:
+    ld = registry.layer_data(organ, layer) or {}
+    states = ld.get("states", {})
 
     def tfs(name: Optional[str]) -> List[str]:
         st = states.get(name)
@@ -88,21 +87,24 @@ def get(
 ) -> Dict[str, Any]:
     if not registry.organ_implemented(organ):
         o = registry.organ(organ) or {}
-        return {"status": "not_computed", "organ": organ, "layer": layer,
+        return {"status": "not_computed", "organ": organ, "layer": layer, "route": route,
                 "note": o.get("note", "Planned organ — GRN not yet inferred.")}
 
-    if not registry.grn_available(organ, layer):
-        # Method is defined for any layer, but only the epithelial GRN was run.
+    cand = _candidate_hubs(organ, layer, source, target)
+    if not registry.grn_available(organ, layer, route):
+        if route == "scenicplus":
+            note = ("The enhancer-aware (SCENIC+) GRN was inferred only for lung epithelial in the "
+                    "reference run. Candidate regulators (Stage-B master TFs) are shown.")
+        else:
+            note = ("No CellOracle base-GRN has been computed for this layer. Candidate regulators "
+                    "(Stage-B master TFs) are shown; the CellOracle route needs the layer's sub-atlas.")
         return {
             "status": "not_computed",
             "organ": organ,
             "layer": layer,
-            "note": (
-                "Enhancer-aware GRN was inferred only for lung epithelial in the "
-                "reference run. Candidate regulators (Stage-B master TFs) are shown; "
-                "run CellOracle/SCENIC+ to produce this layer's network."
-            ),
-            "candidate_hubs": _candidate_hubs(layer, source, target),
+            "route": route,
+            "note": note,
+            "candidate_hubs": cand,
         }
 
     table = _hub_table()
@@ -110,14 +112,14 @@ def get(
         "status": "cached",
         "organ": organ,
         "layer": layer,
-        "route": "scenicplus",
+        "route": route,
         "route_detail": "SCENIC+ enhancer-aware eRegulons (13/16 canonical epithelial TFs recovered)",
         "n_clusters": table["n_clusters"],
         "clusters": table["clusters"],
         "edges_per_cluster": table["edges_per_cluster"],
         "n_edges": table["n_edges_total"],
         "hubs": table["hubs"],
-        "candidate_hubs": _candidate_hubs(layer, source, target),
+        "candidate_hubs": cand,
         "artifact_uri": "external://artifact-store/epi_links.celloracle.links",
         "artifact_status": "external_not_in_bundle",
     }
@@ -127,14 +129,11 @@ def run(job) -> Dict[str, Any]:
     p = job.params
     organ, layer = p.get("organ", "lung"), p.get("layer", "epithelial")
     route = p.get("route", "scenicplus")
-    if registry.stage_status("C", organ, layer) == "cached":
+    if registry.reference_cached("C", organ, layer, route=route):
         job.progress = "loading cached GRN network scores"
-        result = get(organ, layer, route, p.get("source"), p.get("target"))
-        key = store.make_key("C", organ, layer, engine_params={"route": route, **(p.get("engine_params") or {})})
-        result["artifact_uri"] = store.put(key, result)
-        return result
+        return get(organ, layer, route, p.get("source"), p.get("target"))
     raise ComputeUnavailable(
-        f"No cached GRN for organ='{organ}', layer='{layer}'. Inference requires the "
-        "integrated sub-atlas + CellOracle (CPU) or SCENIC+ (GPU cisTarget DB); only the "
-        "lung epithelial GRN is cached in this bundle."
+        f"No cached GRN for organ='{organ}', layer='{layer}' via route '{route}'. Inference needs "
+        "the layer's sub-atlas (CellOracle, CPU) or matched multiome + cisTarget (SCENIC+, GPU); "
+        "see the requirements listed for this stage."
     )

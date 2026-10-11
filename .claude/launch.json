@@ -4,8 +4,8 @@
     {
       "name": "repro-pipeline",
       "runtimeExecutable": "python3",
-      "runtimeArgs": ["-m", "backend.app", "--port", "8765"],
-      "port": 8765
+      "runtimeArgs": ["-m", "backend.app", "--port", "8770"],
+      "port": 8770
     }
   ]
 }

@@ -8,14 +8,15 @@ Backing: distaltf_fate_proximity_readout.json (recipe cocktail) +
 fate_proximity_readout.json (OSKM baseline). Both species were run, and species
 is a real parameter (guardrail 3): human AT2 has headroom toward the tip, mouse
 AT2 already sits adjacent to its E17.5 tip. A fresh recompute needs an A100 +
-the 3B-param PertFormer weights, so uncached combinations are refused honestly.
+the 3B-param PertFormer weights, so uncached combinations are refused honestly,
+with the missing requirements listed by capabilities.py.
 """
 
 from __future__ import annotations
 
 from typing import Any, Dict, List, Optional
 
-from .. import config, data_loader, registry, store
+from .. import config, data_loader, registry
 from ..jobs import ComputeUnavailable
 
 # The reference distal-TF knock-in cocktail (motif-bearing TFs).
@@ -65,7 +66,7 @@ def get(
     species: str = "human",
     tf_set: Optional[List[str]] = None,
 ) -> Dict[str, Any]:
-    if registry.stage_status("F", organ, layer, source, target, species) != "cached":
+    if not registry.reference_cached("F", organ, layer, source, target, species):
         return {
             "status": "not_computed",
             "organ": organ, "layer": layer, "source": source, "target": target, "species": species,
@@ -94,16 +95,13 @@ def run(job) -> Dict[str, Any]:
     layer = p.get("layer", "epithelial")
     source, target, species = p.get("source"), p.get("target"), p.get("species", "human")
     tf_set = p.get("tf_set")
-    if registry.stage_status("F", organ, layer, source, target, species) == "cached":
+    if registry.reference_cached("F", organ, layer, source, target, species):
         job.progress = "loading cached PertFormer fate readout"
-        result = get(organ, layer, source, target, species, tf_set)
-        key = store.make_key("F", organ, layer, source, target, species,
-                             engine_params={"tf_set": tf_set, **(p.get("ki_params") or {})})
-        result["artifact_uri"] = store.put(key, result)
-        return result
+        return get(organ, layer, source, target, species, tf_set)
     raise ComputeUnavailable(
         f"No cached fate readout for {organ}/{layer} {source} -> {target} ({species}). PertFormer "
-        "inference needs an A100 + the ~12.8 GB 3B-param weights (HuggingFace "
-        "GenomicIntelligenceDamoAcademy/pertformer) and DNA+ATAC tracks; only the lung "
-        "epithelial AT2 -> fetal distal-tip case (human & mouse) is cached."
+        "inference needs an A100 (CUDA GPU), the ~12.8 GB 3B-param weights "
+        "(HuggingFace GenomicIntelligenceDamoAcademy/pertformer) and DNA+ATAC tracks for this "
+        f"layer; only {config.REFERENCE_CASE['source']} -> {config.REFERENCE_CASE['target']} "
+        "(lung epithelial, human and mouse) is cached."
     )

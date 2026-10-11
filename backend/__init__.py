@@ -11,4 +11,4 @@ reference bundle is meant to run anywhere. The request/response *shapes* are the
 contract, and they match Section 4 exactly.
 """
 
-__all__ = ["config", "data_loader", "registry", "store", "jobs", "app"]
+__all__ = ["config", "data_loader", "registry", "artifacts", "capabilities", "organ_bundles", "jobs", "app"]

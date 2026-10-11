@@ -5,11 +5,11 @@ Handoff Section 2, rule 1: "stages are jobs, not request handlers." Stage B
 inside a request. The API submits a job, returns a ``job_id``, and the frontend
 polls ``GET /jobs/{job_id}``.
 
-Here jobs run on background threads. A job's runner either (a) returns a cached
-artifact quickly, or (b) raises ``ComputeUnavailable`` when the requested
-combination has no cached result and the real recompute needs resources not
-present in this bundle (a GPU host, multi-GB atlases, PertFormer weights). It
-never invents a result — a failed job reports honestly what compute is missing.
+Here jobs run on background threads. A job's runner either (a) returns a real
+result (reference data or a durable artifact), or (b) raises ``ComputeUnavailable``
+when the requested combination has no result and the real recompute needs
+resources that are not present. It never invents a result. A failed job reports
+what is missing as a ``requires`` list computed by ``capabilities.py``.
 """
 
 from __future__ import annotations
@@ -17,7 +17,9 @@ from __future__ import annotations
 import threading
 import time
 import uuid
-from typing import Any, Callable, Dict, Optional
+from typing import Any, Callable, Dict, List, Optional
+
+from . import capabilities
 
 
 class ComputeUnavailable(Exception):
@@ -34,6 +36,7 @@ class Job:
         self.result: Any = None
         self.result_uri: Optional[str] = None
         self.error: Optional[str] = None
+        self.requires: List[str] = []
         self.created = time.time()
         self.updated = self.created
 
@@ -46,11 +49,20 @@ class Job:
             "progress": self.progress,
             "result_uri": self.result_uri,
             "error": self.error,
+            "requires": self.requires,
         }
 
 
 _JOBS: Dict[str, Job] = {}
 _LOCK = threading.Lock()
+
+
+def _requirements(job: Job) -> List[str]:
+    p = job.params
+    try:
+        return capabilities.requirements(job.stage, p.get("organ", "lung"), p.get("layer", "epithelial"), p.get("route"))
+    except Exception:  # noqa: BLE001 — a failed requirements check must not hide the real error
+        return []
 
 
 def _run(job: Job, runner: Callable[["Job"], Any]) -> None:
@@ -64,13 +76,27 @@ def _run(job: Job, runner: Callable[["Job"], Any]) -> None:
         job.status = "done"
         job.progress = "complete"
     except ComputeUnavailable as exc:
-        job.status = "failed"
         job.error = str(exc)
+        job.requires = _requirements(job)
+        job.status = "failed"  # written last: a poller that sees "failed" sees the rest too
     except Exception as exc:  # noqa: BLE001 — surface any runner failure honestly
-        job.status = "failed"
         job.error = f"{type(exc).__name__}: {exc}"
+        job.requires = _requirements(job)
+        job.status = "failed"
     finally:
         job.updated = time.time()
+
+
+def completed(stage: str, params: Dict[str, Any], result: Dict[str, Any]) -> Job:
+    """Register a job that is already finished (a stored artifact answered it)."""
+    job = Job(stage, params)
+    job.status = "done"
+    job.progress = "served from a stored artifact"
+    job.result = result
+    job.result_uri = result.get("artifact_uri")
+    with _LOCK:
+        _JOBS[job.job_id] = job
+    return job
 
 
 def submit(stage: str, params: Dict[str, Any], runner: Callable[["Job"], Any]) -> Job:

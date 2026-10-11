@@ -1,7 +1,8 @@
 /* app.js — boot + wiring. Hydrates the selection panel and ribbon from the API
  * (GET /organs, /layers, /states, /runs, /stages), renders the per-stage panel
- * from GET /stage/{X}, and falls back to the embedded seed when the backend is
- * unreachable. Mirrors the original blueprint's control flow, now client/server.
+ * from GET /stage/{X}, and offers an explicit "Request computation" action for
+ * stages that are not computed. The action submits a background job and polls
+ * GET /jobs/{id}; nothing is displayed until a real result exists.
  */
 (function () {
   "use strict";
@@ -126,6 +127,59 @@
       '<div class="meta-row"><div class="m"><b>Source session:</b> ' + esc(st.session) + "</div><div class=\"m\"><b>Compute:</b> " + esc(st.compute) + "</div></div>";
   }
 
+  /* ---------- explicit compute action (live backend only) ---------- */
+  function runPanelHTML(payload) {
+    var live = API.mode === "live";
+    var reqs = (payload.requires || []).map(function (r) { return "<li>" + esc(r) + "</li>"; }).join("");
+    return '<div class="dpanel run-panel"><div class="dh"><h3 style="font-size:13px">Compute this stage</h3>' +
+      '<span class="tag">explicit action · runs as a background job</span></div><div class="db">' +
+      '<p style="color:var(--mut);font-size:12.5px;margin:0 0 10px">A real run is attempted for this exact combination. Nothing is shown until a real result exists.</p>' +
+      (reqs ? '<div class="reqhead">Requirements not met here</div><ul class="reqlist">' + reqs + "</ul>" : "") +
+      '<div class="runrow"><button class="runbtn" id="runBtn"' + (live ? "" : " disabled") + ">Request computation</button>" +
+      '<span id="runStatus" class="runstatus">' +
+      (live ? "" : "Needs the live backend — start it with python3 -m backend.app") + "</span></div>" +
+      "</div></div>";
+  }
+
+  function pollJob(jobId, status) {
+    return new Promise(function (resolve, reject) {
+      var tries = 0;
+      (function tick() {
+        API.getJob(jobId).then(function (job) {
+          if (job.status === "unknown") return reject(new Error(job.error || "backend unreachable"));
+          if (status) status.textContent = job.status + (job.progress ? " · " + job.progress : "");
+          if (job.status === "done" || job.status === "failed") return resolve(job);
+          if (++tries > 240) return reject(new Error("timed out waiting for job " + jobId));
+          setTimeout(tick, 1000);
+        }, reject);
+      })();
+    });
+  }
+
+  function startRun(stage) {
+    var btn = el("runBtn"), status = el("runStatus");
+    var p = window.params();
+    var body = { organ: p.organ, layer: p.layer, source: p.source, target: p.target, species: p.species };
+    btn.disabled = true;
+    status.textContent = "submitting…";
+    API.runStage(stage, body)
+      .then(function (res) { return pollJob(res.job_id, status); })
+      .then(function (job) {
+        if (job.status === "done") { status.textContent = "done — refreshing"; return refresh(); }
+        status.textContent = "not computed: " + (job.error || "the job failed");
+        btn.disabled = false;
+      })
+      .catch(function (e) {
+        status.textContent = "error: " + e.message;
+        btn.disabled = false;
+      });
+  }
+
+  function bindRun(stage) {
+    var btn = el("runBtn");
+    if (btn && !btn.disabled) btn.onclick = function () { startRun(stage); };
+  }
+
   var renderSeq = 0;
   function renderStage() {
     renderStageMeta();
@@ -137,14 +191,26 @@
     var stage = S.stage;
     var p = window.params();
     d.innerHTML = '<div class="dpanel"><div class="db" style="color:var(--dim)">Loading ' + stage + " …</div></div>";
-    var apply = function (html) { if (seq === renderSeq) d.innerHTML = html; };
+
+    var apply = function (html, payload) {
+      if (seq !== renderSeq) return;
+      d.innerHTML = html;
+      if (payload && payload.status === "not_computed" && stage !== "A") {
+        d.insertAdjacentHTML("beforeend", runPanelHTML(payload));
+        bindRun(stage);
+      }
+    };
+
     if (stage === "F") {
       Promise.all([
         API.getStage("F", Object.assign({}, p, { species: "human" })),
         API.getStage("F", Object.assign({}, p, { species: "mouse" })),
-      ]).then(function (both) { apply(window.STAGES.F(both[0], both[1])); });
+      ]).then(function (both) {
+        var selected = S.species === "mouse" ? both[1] : both[0];
+        apply(window.STAGES.F(both[0], both[1]), selected);
+      });
     } else {
-      API.getStage(stage, p).then(function (payload) { apply(window.STAGES[stage](payload)); });
+      API.getStage(stage, p).then(function (payload) { apply(window.STAGES[stage](payload), payload); });
     }
   }
 
@@ -172,7 +238,7 @@
   /* ---------- live/offline badge ---------- */
   function setModeBadge(mode) {
     var b = el("modeBadge"); if (!b) return;
-    if (mode === "offline") { b.textContent = "offline (seed)"; b.className = "modebadge off"; }
+    if (mode === "offline") { b.textContent = "offline (snapshot)"; b.className = "modebadge off"; }
     else { b.textContent = "live backend"; b.className = "modebadge live"; }
   }
 

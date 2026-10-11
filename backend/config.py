@@ -18,6 +18,14 @@ DATA_DIR = os.path.join(ROOT, "data", "reference")
 FRONTEND_DIR = os.path.join(ROOT, "frontend")
 SEED_PATH = os.path.join(FRONTEND_DIR, "seed", "pipeline_seed_data.json")
 
+# Large inputs that are not in the bundle (integrated sub-atlases, multiome files)
+# are dropped here by the user; capabilities.py checks for them by path.
+EXTERNAL_DIR = os.path.join(ROOT, "data", "external")
+# Durable results written by runs that actually computed something (artifacts.py).
+RESULTS_DIR = os.path.join(ROOT, "data", "results")
+# Organ bundles for organs beyond the lung reference (organ_bundles.py).
+ORGANS_DIR = os.path.join(ROOT, "data", "organs")
+
 # The one worked reference case (all six stages executed). Used by the store /
 # registry to decide which (organ, layer, source, target) combinations have a
 # real cached result vs. must report ``not_computed``.
@@ -29,9 +37,11 @@ REFERENCE_CASE = {
     "species": ("human", "mouse"),  # both species were run in Stage F
 }
 
-# Layers whose Stage-C enhancer-aware GRN centrality table actually exists.
-# (The reference GRN_network_scores_enhancer.csv is the epithelial run.)
-GRN_COMPUTED_LAYERS = {"lung": {"epithelial"}}
+# Stage-C routes the API accepts, and the (organ, layer, route) combinations whose
+# GRN actually exists. The reference GRN_network_scores_enhancer.csv is the
+# SCENIC+ (enhancer-aware) run for lung epithelial; no CellOracle GRN is cached.
+GRN_ROUTES = ("scenicplus", "celloracle")
+GRN_COMPUTED = {("lung", "epithelial", "scenicplus")}
 
 HOST_DEFAULT = "127.0.0.1"
 PORT_DEFAULT = int(os.environ.get("REPRO_PORT", "8765"))

@@ -5,7 +5,14 @@ __pycache__/
 .pytest_cache/
 .mypy_cache/
 
-# Generated stage-result cache (recreated at runtime by backend/store.py)
+# Durable stage results (data/results) and large external inputs (data/external):
+# kept out of git; README files stay tracked.
+data/results/*
+!data/results/README.md
+data/external/*
+!data/external/README.md
+
+# Legacy generated cache (no longer written)
 data/cache/
 
 # Logs & temp

@@ -1,11 +1,15 @@
-/* api.js — backend fetch wrappers with an offline (window.__SEED__) fallback.
+/* api.js — backend fetch wrappers with two offline fallbacks.
  *
  * Every call first tries the live backend (same-origin). If the fetch fails
- * (backend down, or the file was opened directly via file://), it falls back to
- * deriving the identical response shape from the embedded seed bundle. This is
- * what the handoff calls "keep an offline mode": the real lung reference case
- * works before the backend is up, and light up richer data (36-row catalog,
- * GRN hub table, live LINCS query) once it is.
+ * (backend down, or the file was opened directly via file://) it answers from:
+ *
+ *   1. window.__SNAPSHOT__ — the exact responses the backend gives for the
+ *      reference UI paths, generated at build time by scripts/build_standalone.py.
+ *      Offline output therefore matches live output for every reference combination.
+ *   2. SEED — a lighter adapter over window.__SEED__, used only for combinations the
+ *      snapshot does not cover (those are not_computed anyway).
+ *
+ * Runs and job polling need the live backend: runStage() is never faked.
  */
 (function () {
   "use strict";
@@ -22,6 +26,23 @@
   function organImplemented(organ) {
     var o = seed().organs && seed().organs[organ];
     return !!o && o.status === "implemented";
+  }
+
+  // ---- snapshot lookup -------------------------------------------------------
+  function norm(v) { return v == null ? "" : String(v); }
+
+  function snapshotFor(snapPath, q) {
+    var snap = window.__SNAPSHOT__;
+    if (!snap || !snap.entries || !snapPath) return undefined;
+    var keys = (snap.keys && snap.keys[snapPath.p]) || [];
+    var query = q || {};
+    for (var i = 0; i < snap.entries.length; i++) {
+      var e = snap.entries[i];
+      if (e.p !== snapPath.p) continue;
+      var match = keys.every(function (k) { return norm(e.q[k]) === norm(query[k]); });
+      if (match) return snap.payloads[e.i];
+    }
+    return undefined;
   }
 
   // ---- offline adapters: build backend-shaped payloads from the seed --------
@@ -103,8 +124,8 @@
         }) : [];
         return { status: status, organ: p.organ, datasets: datasets,
                  drug_engine: { libraries: ["LINCS L1000 (via Enrichr)"], confirm: "Tahoe-100M",
-                                status: "ready", live_query_available: false,
-                                note: "Offline fallback — live LINCS/Tahoe query needs the backend." } };
+                                status: "unknown", live_query_available: false,
+                                note: "Offline seed view — the live engine health needs the backend." } };
       }
       if (id === "B") {
         if (status !== "cached") return { status: status, organ: p.organ, layer: p.layer, note: (s.organs[p.organ] || {}).note || "" };
@@ -113,18 +134,14 @@
                  atlas: { cells: a.cells, donors: a.donors, n_states: a.n_states,
                           phase_coverage: { fetal: a.fetal, perinatal: a.perinatal, adult_aging: a.adult_aging } },
                  states: l.states, source_datasets: s.dev_datasets,
-                 artifact_uri: "external://artifact-store/" + p.layer + "_subatlas.h5ad" };
+                 artifact_uri: "external://artifact-store/" + p.organ + "/" + p.layer + "_subatlas.h5ad" };
       }
       if (id === "C") {
         var l2 = s.layers[p.layer] || { states: {} };
         function tfs(name) { var st = l2.states[name]; return st ? st.master_tfs.slice(0, 8).map(function (t) { return t.tf; }) : []; }
         var cand = { source: tfs(p.source), target: tfs(p.target) };
-        if (status !== "cached") return { status: status, organ: p.organ, layer: p.layer, candidate_hubs: cand,
-                                          note: "Enhancer-aware GRN was inferred only for lung epithelial in the reference run." };
-        return { status: "cached", organ: p.organ, layer: p.layer, route: "scenicplus",
-                 route_detail: "SCENIC+ enhancer-aware eRegulons (13/16 canonical epithelial TFs recovered)",
-                 hubs: [], n_edges: null, candidate_hubs: cand,
-                 note: "Hub centrality table available from the backend." };
+        return { status: "not_computed", organ: p.organ, layer: p.layer, route: "scenicplus", candidate_hubs: cand,
+                 note: "Offline seed view — the GRN hub table is served by the backend or the build snapshot." };
       }
       if (id === "D") {
         if (status !== "cached") return { status: status, organ: p.organ, layer: p.layer, source: p.source, target: p.target,
@@ -192,36 +209,54 @@
       });
       return parts.length ? "?" + parts.join("&") : "";
     },
-    _get: function (path, fallback) {
+    // url: the request path (with query); snap: {p, q} to find in the snapshot; fallback: seed adapter
+    _get: function (url, fallback, snap) {
       var self = this;
-      return fetch(this.base + path, { headers: { "Accept": "application/json" } })
+      return fetch(this.base + url, { headers: { "Accept": "application/json" } })
         .then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
         .then(function (j) { self._setMode("live"); return j; })
-        .catch(function () { self._setMode("offline"); return fallback(); });
+        .catch(function () {
+          self._setMode("offline");
+          var hit = snapshotFor(snap, snap && snap.q);
+          return hit !== undefined ? hit : fallback();
+        });
     },
     _post: function (path, body) {
       return fetch(this.base + path, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body || {}),
-      }).then(function (r) { return r.json(); });
+      }).then(function (r) {
+        return r.json().catch(function () { return {}; }).then(function (j) {
+          if (!r.ok) throw new Error(j.error || ("HTTP " + r.status));
+          return j;
+        });
+      });
     },
 
-    getMeta: function () { return this._get("/meta", function () { return SEED.meta(); }); },
-    getOrgans: function () { return this._get("/organs", function () { return SEED.organs(); }); },
-    getLayers: function (organ) { return this._get("/organs/" + encodeURIComponent(organ) + "/layers", function () { return SEED.layers(organ); }); },
-    getStates: function (organ, layer) {
-      return this._get("/organs/" + encodeURIComponent(organ) + "/layers/" + encodeURIComponent(layer) + "/states",
-                       function () { return SEED.states(organ, layer); });
+    getMeta: function () { return this._get("/meta", function () { return SEED.meta(); }, { p: "/meta", q: {} }); },
+    getOrgans: function () { return this._get("/organs", function () { return SEED.organs(); }, { p: "/organs", q: {} }); },
+    getLayers: function (organ) {
+      var path = "/organs/" + encodeURIComponent(organ) + "/layers";
+      return this._get(path, function () { return SEED.layers(organ); }, { p: path, q: {} });
     },
-    getRuns: function (p) { return this._get("/runs" + this._qs(p), function () { return SEED.runs(p); }); },
+    getStates: function (organ, layer) {
+      var path = "/organs/" + encodeURIComponent(organ) + "/layers/" + encodeURIComponent(layer) + "/states";
+      return this._get(path, function () { return SEED.states(organ, layer); }, { p: path, q: {} });
+    },
+    getRuns: function (p) {
+      return this._get("/runs" + this._qs(p), function () { return SEED.runs(p); }, { p: "/runs", q: p });
+    },
     getStage: function (id, p) {
       var params = { organ: p.organ, layer: p.layer, source: p.source, target: p.target, species: p.species };
-      return this._get("/stage/" + id + this._qs(params), function () { return SEED.stage(id, p); });
+      var path = "/stage/" + id;
+      return this._get(path + this._qs(params), function () { return SEED.stage(id, p); }, { p: path, q: params });
     },
-    getProvenance: function () { return this._get("/provenance", function () { return SEED.provenance(); }); },
+    getProvenance: function () { return this._get("/provenance", function () { return SEED.provenance(); }, { p: "/provenance", q: {} }); },
     runStage: function (id, body) { return this._post("/stage/" + id + "/run", body); },
-    getJob: function (jobId) { return this._get("/jobs/" + encodeURIComponent(jobId), function () { return { status: "unknown", error: "offline" }; }); },
+    getJob: function (jobId) {
+      return this._get("/jobs/" + encodeURIComponent(jobId), function () { return { status: "unknown", error: "backend unreachable" }; }, null);
+    },
   };
 
   window.API = API;
