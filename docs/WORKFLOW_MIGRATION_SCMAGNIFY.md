@@ -55,7 +55,7 @@ docker build --target core-cpu -t scmagnify-scelixir:1.0 -f docker/Dockerfile .
 # 3. (Optional) Build CUDA 12.4 GPU image for large full-atlas multi-seed runs
 docker build --target gpu-cuda -t scmagnify-scelixir:1.0-gpu -f docker/Dockerfile .
 
-# 4. Run full end-to-end deterministic verification & 9-test rootless pytest suite
+# 4. Run full end-to-end deterministic verification & 10-test rootless pytest suite
 docker run --rm scmagnify-scelixir:1.0 /workspace/docker/verify_scmagnify_env.py
 docker run --rm --user $(id -u):$(id -g) -e HOME=/tmp scmagnify-scelixir:1.0 -m pytest /workspace/tests -v
 ```
@@ -85,9 +85,9 @@ Contents of `scm_data/`:
 
 ---
 
-## 3. Twelve Critical Upstream Fixes & Speedups in `scMagnify-private` (`scelixir-repro`)
+## 3. Thirteen Critical Upstream Fixes & Speedups in `scMagnify-private` (`scelixir-repro`)
 
-Vanilla `scMagnify` `v0.1.1` exhibits eleven numerical, memory, and API defects plus an $O(p \times q)$ dense CPU bottleneck on modern `anndata`/`decoupler`/`scanpy` stacks. All twelve are resolved and verified via 9 rootless unit tests in [`test_active_edge_isomorphism.py`](file:///home/antigravity/thejimmychai/scMagnify-private/tests/test_active_edge_isomorphism.py):
+Vanilla `scMagnify` `v0.1.1` exhibits twelve numerical, memory, API, and plotting defects plus an $O(p \times q)$ dense CPU bottleneck on modern `anndata`/`decoupler`/`scanpy` stacks. All thirteen are resolved and verified via 10 rootless unit tests in [`test_active_edge_isomorphism.py`](file:///home/antigravity/thejimmychai/scMagnify-private/tests/test_active_edge_isomorphism.py):
 
 | # | Module | Defect in Upstream `v0.1.1` | Fix in `scelixir-repro` |
 | :-: | :--- | :--- | :--- |
@@ -102,7 +102,8 @@ Vanilla `scMagnify` `v0.1.1` exhibits eleven numerical, memory, and API defects 
 | **9** | [`requirements.scmagnify.txt`](file:///home/antigravity/thejimmychai/scMagnify-private/docker/requirements.scmagnify.txt) | `anndata>=0.10.9` removed `AlignedViewMixin` (`mudata==0.2.x` crash) while `mudata>=0.3` removed `write_h5mu`; SciPy `1.14+` removed `.A`. | Pinned `anndata==0.10.8`, `mudata==0.2.3`, `scipy==1.13.1`, `tensorly==0.9.0`, `decoupler>=2.1.0`, and replaced `.X.A` / `.A1` calls with safe helpers. |
 | **10** | [`_train.py`](file:///home/antigravity/thejimmychai/scMagnify-private/src/scmagnify/models/_train.py) | Passing `time_key="velocity"` invoked `cr.kernels.VelocityKernel` in `partial_ordering` and then crashed on `adata_fil.obs["velocity"]`. | Resolved cell-ordering vector `T` cleanly via `latent_time` / `velocity_pseudotime` / `dpt_pseudotime` fallback when `time_key == "velocity"`. |
 | **11** | [`_modules.py`](file:///home/antigravity/thejimmychai/scMagnify-private/src/scmagnify/models/_modules.py) & [`_train.py`](file:///home/antigravity/thejimmychai/scMagnify-private/src/scmagnify/models/_train.py) | Dense `(p × q)` `MSNGC` evaluation & generic `torch.norm` backward kernels spent ~88% of compute on zero-masked chromatin edges (`37.03 s/epoch` on CPU). | Parameterized `MSNGC.forward_active` over `chrom_constraint > 0` active edges + fused SIMD L1/L2 norms (**45.8× CPU speedup** to `0.81 s/epoch`, proven algebraically identical for identical active-edge parameters within `atol = 1e-6`). |
-| **12** | [`_modules.py`](file:///home/antigravity/thejimmychai/scMagnify-private/src/scmagnify/models/_modules.py) & [`_train.py`](file:///home/antigravity/thejimmychai/scMagnify-private/src/scmagnify/models/_train.py) | Upstream `m.bias.data.fill_(0.1)` initialized final linear output biases to `+0.1`, creating zero-CV phantom edges on unexpressed TFs under moderate step budgets; `dc.mt.mlm(tmin=5)` crashed on sparse subsets. | Zero-initialized final-layer edge biases (`nn.init.zeros_(m.bias.data)`, keeping `0.01` on hidden ReLU layers) and set dynamic `tmin = min(5, max_tgs)`. |
+| **12** | [`_modules.py`](file:///home/antigravity/thejimmychai/scMagnify-private/src/scmagnify/models/_modules.py) & [`_train.py`](file:///home/antigravity/thejimmychai/scMagnify-private/src/scmagnify/models/_train.py) | Upstream `m.bias.data.fill_(0.1)` initialized final linear output biases to `+0.1`, creating zero-CV phantom edges on unexpressed TFs under moderate step budgets; `dc.mt.mlm(tmin=5)` crashed on sparse subsets. | Zero-initialized final-layer edge biases (`nn.init.zeros_(m.bias.data)`, keeping `0.01` on hidden ReLU layers) and set dynamic `tmin = min(5, max_tgs)` + `ulm` collinearity fallback. |
+| **13** | [`plotting/__init__.py`](file:///home/antigravity/thejimmychai/scMagnify-private/src/scmagnify/plotting/__init__.py), [`_seqlogo.py`](file:///home/antigravity/thejimmychai/scMagnify-private/src/scmagnify/plotting/_seqlogo.py) & [`_genome_viewer.py`](file:///home/antigravity/thejimmychai/scMagnify-private/src/scmagnify/plotting/_genome_viewer.py) | `seqlogo` missing from `scm.pl` exports and failed on non-0-indexed DataFrames; `GenomeViewer._compute_coverage` failed without external `bedtools` CLI. | Exported `scm.pl.seqlogo`, normalized 0-based position indices, added `bedtools` to [`Dockerfile`](file:///home/antigravity/thejimmychai/scMagnify-private/docker/Dockerfile), and added an exact $O(L)$ NumPy interval prefix-sum fallback in `GenomeViewer`. |
 
 ---
 
@@ -146,11 +147,11 @@ Validated across Human Hematopoiesis (`cd34_multiome`), Mouse Pancreas (`endocri
 - **Case B (scRNA-Only Trajectory with Public Reference ATAC Atlas):**
   Use cell-type-matched public ENCODE / CATlas / ChIP-Atlas enhancer-promoter + PWM links intersected with trajectory dynamic genes (`250–400` dynamic genes per branch).
 
-### Step 3 — Run Within-Timepoint (Q1) and Cross-Timepoint Trajectory (Q2) `scMagnify`
-Copy [`01_run_scelixir_lung_scmagnify.py`](file:///home/antigravity/thejimmychai/scMagnify-private/scelixir_lung/01_run_scelixir_lung_scmagnify.py) as your template and update three dictionaries:
+### Step 3 — Run Within-Timepoint (Q1), Cross-Timepoint Trajectory (Q2) & Complete Vignette Suite (`V100`–`V500`)
+Copy [`01_run_scelixir_lung_scmagnify.py`](file:///home/antigravity/thejimmychai/scMagnify-private/scelixir_lung/01_run_scelixir_lung_scmagnify.py) and [`03_backfill_scmagnify_lung_vignettes.py`](file:///home/antigravity/thejimmychai/scMagnify-private/scelixir_lung/03_backfill_scmagnify_lung_vignettes.py) as your templates and update three dictionaries:
 1. `CURATED_<ORGAN>_GENES`: canonical progenitor, mature fate A/B/C markers, and plasma-membrane niche receptors.
 2. `epoch_stage` mapping (`T1..Tk` chronological stages) for **Q1** (gating basal edges per epoch to expressed TFs, separating long-lag $\tau \ge 2.65$ master regulators from short-lag $\tau < 2.65$ rapid effectors, and combining `RegFactor` Tucker decomposition with stress/cell-cycle signature hygiene).
-3. `lineage_specs` (`Progenitor -> Mature Fate_i`) for **Q2**: when combining whole-cell fetal scRNA with postnatal/adult nuclear snRNA, depth-normalize mean regulator expression within each fate column (`E_depth = E / E.mean(axis=0)`) before computing fate-specificity fold enrichment and ternary coordinates, and normalize locus-browser ATAC peak heights across cell types globally (`global_max_h`) rather than per track so differential enhancer opening is preserved.
+3. `lineage_specs` (`Progenitor -> Mature Fate_i`) for **Q2**: depth-normalize mean regulator expression within each fate column (`E_depth = E / E.mean(axis=0)`), normalize locus-browser ATAC peak heights globally across cell types, and run `03_backfill_scmagnify_lung_vignettes.py` to generate all **20 official `scMagnify` vignette outputs (`V100`–`V500`, dual `300-DPI .png` + `.svg` + primary `.csv` tables)** for direct claim-to-evidence linking.
 
 ### Step 4 — Register New Organ in `scElixir` Web/API Bundle
 1. Export `GRN_network_scores_scmagnify.csv` (computing true directed `degree_in`, `degree_out`, and `degree_all` over `filtered_network`) into `scElixir_Claude_Hackerthon/data/organs/<organ_id>/` or `data/reference/`.

@@ -1,0 +1,31 @@
+group,term,fdr,n_genes
+AT1_RF3,Endothelial Cell Development,0.007716384038565902,6
+AT1_RF4,Modulation Of Process Of Another Organism,0.027536324766686472,6
+AT2_RF1,Multicellular Organismal Level Chemical Homeos,0.03251149421734295,7
+Club_RF1,Postsynapse Organization,0.05146182464563205,5
+AT1_RF3,Establishment Of Endothelial Barrier,0.05146182464563205,5
+Club_RF4,Leukocyte Migration,0.05561592544545901,8
+AT2_RF1,Positive Regulation Of Alpha Beta T Cell Diffe,0.07310402847502367,4
+Club_RF2,Dendritic Cell Differentiation,0.07310402847502367,4
+AT1_RF5,Positive Regulation Of Interleukin 2 Productio,0.07310402847502367,4
+Club_RF5,Non Canonical Nf Kappab Signal Transduction,0.07310402847502367,4
+Club_RF5,Regulation Of Non Canonical Nf Kappab Signal T,0.07310402847502367,4
+AT2_RF3,Positive Regulation Of Interleukin 2 Productio,0.07310402847502367,4
+AT1_RF4,Viral Process,0.0992483730560387,8
+Club_RF3,Cell Adhesion,0.14985144815651513,20
+AT2_RF4,Respiratory Gaseous Exchange By Respiratory Sy,0.16082542616329734,5
+Club_RF4,Leukocyte Mediated Cytotoxicity,0.16082542616329734,5
+AT2_RF5,Respiratory Gaseous Exchange By Respiratory Sy,0.16082542616329734,5
+AT2_RF3,Respiratory Gaseous Exchange By Respiratory Sy,0.16082542616329734,5
+Club_RF2,Mononuclear Cell Migration,0.16082542616329734,5
+Club_RF3,Biological Process Involved In Interaction Wit,0.16436454059185215,6
+AT2_RF2,Interleukin 2 Production,0.3270936658690163,4
+AT1_RF5,Interleukin 2 Production,0.3270936658690163,4
+Club_RF1,Protein Localization To Cell Junction,0.3270936658690163,4
+AT1_RF1,Leukocyte Migration,0.40123083941347204,7
+AT1_RF1,Caveola Assembly,0.5447990693495812,3
+AT1_RF2,Negative Regulation Of G Protein Coupled Recep,0.5447990693495812,3
+AT1_RF2,Cellular Response To Camp,0.5447990693495812,3
+AT2_RF4,Neuron Projection Organization,0.5447990693495812,3
+AT2_RF2,Cellular Response To Camp,0.5447990693495812,3
+AT2_RF5,Interleukin 2 Production,1.0,3
