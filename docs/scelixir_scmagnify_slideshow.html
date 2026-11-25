@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>scMagnify × scElixir — Lung Development &amp; Reprogramming Slideshow</title>
+  <meta name="description" content="11-slide executive presentation on decomposing multi-scale lung developmental regulation and lag-scheduled AT2-to-Distal-Tip partial reprogramming." />
+  <style>
+    :root {
+      --navy: #16213e;
+      --navy-mid: #1f2f56;
+      --ivory: #faf8f4;
+      --card-bg: #ffffff;
+      --ink: #182026;
+      --muted: #55616d;
+      --rule: #ded8cc;
+      --orange: #d95f02;
+      --at2: #147443;
+      --at1: #882255;
+      --club: #c87a19;
+      --warn: #b91c1c;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: #101622;
+      color: var(--ink);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 1.2rem;
+    }
+    .deck-shell {
+      width: 100%;
+      max-width: 1120px;
+      background: var(--ivory);
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 18px 48px rgba(0, 0, 0, 0.42);
+      display: flex;
+      flex-direction: column;
+    }
+    .slide {
+      display: none;
+      min-height: 580px;
+      padding: 2.8rem 3.4rem;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .slide.active { display: flex; }
+    .slide.dark { background: var(--navy); color: #f8fafc; }
+    .slide-kicker {
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--orange);
+      margin-bottom: 0.45rem;
+    }
+    .slide.dark .slide-kicker { color: #fbbf24; }
+    h1, h2 {
+      font-family: "Charter", Georgia, serif;
+      margin: 0 0 0.9rem 0;
+      line-height: 1.18;
+      letter-spacing: -0.015em;
+    }
+    h1 { font-size: 2.45rem; }
+    h2 { font-size: 1.85rem; }
+    .subtitle { font-size: 1.12rem; color: #cbd5e1; max-width: 840px; line-height: 1.55; }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1.6rem; }
+    .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.2rem; }
+    .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; }
+    @media (max-width: 860px) {
+      .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
+      .slide { padding: 1.8rem; min-height: auto; }
+    }
+    .box { background: var(--card-bg); border: 1px solid var(--rule); border-radius: 6px; padding: 1.15rem 1.25rem; }
+    .slide.dark .box { background: var(--navy-mid); border-color: rgba(255, 255, 255, 0.14); color: #f1f5f9; }
+    .stat-big { font-family: "Charter", Georgia, serif; font-size: 2.05rem; font-weight: 700; color: var(--orange); line-height: 1.1; }
+    .slide.dark .stat-big { color: #fbbf24; }
+    .box h3 { margin: 0 0 0.45rem 0; font-size: 1rem; }
+    .box p, .box ul { margin: 0; font-size: 0.88rem; line-height: 1.55; color: var(--muted); }
+    .slide.dark .box p { color: #cbd5e1; }
+    .box ul { padding-left: 1.15rem; }
+    .box li { margin-bottom: 0.35rem; }
+    table.s-table { width: 100%; border-collapse: collapse; font-size: 0.84rem; background: var(--card-bg); }
+    table.s-table th {
+      text-align: left; padding: 0.55rem 0.7rem; background: #eeeae1; border-bottom: 2px solid var(--rule);
+      font-size: 0.76rem; text-transform: uppercase; letter-spacing: 0.04em;
+    }
+    table.s-table td { padding: 0.52rem 0.7rem; border-bottom: 1px solid var(--rule); }
+    .gene { font-family: ui-monospace, monospace; font-style: italic; font-weight: 700; }
+    .deck-footer {
+      background: #f0ece3; border-top: 1px solid var(--rule); padding: 0.65rem 1.4rem;
+      display: flex; align-items: center; justify-content: space-between; gap: 1rem; font-size: 0.82rem;
+    }
+    .ctrl-btns { display: flex; gap: 0.45rem; align-items: center; }
+    .ctrl-btns button {
+      padding: 0.36rem 0.75rem; border-radius: 4px; border: 1px solid #bfb8a8;
+      background: #ffffff; font-weight: 600; font-size: 0.8rem; cursor: pointer;
+    }
+    .ctrl-btns button:hover { background: var(--ink); color: #ffffff; border-color: var(--ink); }
+    .notes-drawer {
+      display: none; background: #fffbeb; border-top: 1px solid #fde68a;
+      padding: 0.85rem 1.6rem; font-size: 0.84rem; color: #451a03;
+    }
+    .notes-drawer.open { display: block; }
+  </style>
+</head>
+<body>
+  <div class="deck-shell">
+    <!-- SLIDE 1 -->
+    <section class="slide dark active" data-notes="Introduce the overarching scientific goal: stabilizing scMagnify (Chen et al., Feb 2026) with 12 upstream fixes and applying it across human and mouse lung development to answer Q1, Q2, and artificial developmental reversal (AT2 -> Distal Tip).">
+      <div>
+        <div class="slide-kicker">scMagnify (`scelixir-repro`) × scElixir Multiomic Study</div>
+        <h1>Decomposing Lung Development &amp; Artificial Developmental Reversal</h1>
+        <p class="subtitle">
+          Zero-bias, multi-scale neural Granger causality across 10,256 human (5 PCW → 56.8 yr) and 4,084+ mouse (E12.5 → 7 wk) epithelial cells separates pioneer regulators from static SCENIC+ artifacts and guides Club-safe <code>Adult AT2 → Distal Tip</code> partial reprogramming.
+        </p>
+      </div>
+      <div class="grid-4">
+        <div class="box"><div class="stat-big">45.8×</div><p>Active-Edge CPU Speedup (`atol = 1e-6` forward &amp; backward isomorphism)</p></div>
+        <div class="box"><div class="stat-big">12</div><p>Upstream Numerical, Init &amp; Memory Defects Fixed (`9/9` unit tests)</p></div>
+        <div class="box"><div class="stat-big">17,951</div><p>Human Lung `TF → cCRE → Target` Chromatin Triples (`8,270` pure-ATAC)</p></div>
+        <div class="box"><div class="stat-big">93.0% / 21.4%</div><p>Focal Tip Recovery / Global Gap Closure (`0.002` Off-Target Burden)</p></div>
+      </div>
+    </section>
+
+    <!-- SLIDE 2 -->
+    <section class="slide" data-notes="Explain how scMagnify works mathematically and the 12 bugs fixed in scMagnify-private (scelixir-repro), including zero-bias final-layer initialization, repressor preservation, L1-normalized lags, and 45.8x active-edge sparse parameterization.">
+      <div>
+        <div class="slide-kicker">01 / Methodological Engineering &amp; Reproducibility</div>
+        <h2>Stabilizing &amp; 45.8× Accelerating `scMagnify` in Docker</h2>
+        <div class="grid-2">
+          <div class="box">
+            <h3>Multi-Scale Neural Granger Architecture (`MSNGC`)</h3>
+            <ul>
+              <li><strong>Basal Chromatin Mask:</strong> Cis-ATAC peak–gene correlations (`±100 kb` TSS) × `HOCOMOCOv11` PWMs + strict Lambert 2018 DNA-binding TF curation (`1,639` TFs) &amp; context-active gating.</li>
+              <li><strong>5-Step Lag Operator:</strong> CellRank `PseudotimeKernel` / `VelocityKernel` DAG transitions ($K = 5$) separate pioneer chromatin lags ($\tau \ge 2.65$) from rapid effectors ($\tau < 2.65$).</li>
+              <li><strong>Tucker Tensor Decomposition (`RegDecomp`):</strong> Factorizes `(Lag × TF × TG)` into 5 coordinated `RegFactors`.</li>
+            </ul>
+          </div>
+          <div class="box">
+            <h3>12 Upstream Fixes (`scelixir-repro` Branch)</h3>
+            <ul>
+              <li><strong>Zero-Bias Output Init (`Fix #12`):</strong> Replaced upstream `+0.1` output bias with `0.0`, eliminating phantom edges on silent TFs (`SOX9 = 0` targets in adult `T4`).</li>
+              <li><strong>Repressor &amp; Lag Integrity:</strong> Preserved signed repressors (`BCL11A` MLM `-1.09`) and bounded $\tau \in [1, K]$ via L1 normalization.</li>
+              <li><strong>Exact Active-Edge Isomorphism:</strong> Eliminated ~88% wasted FLOPs (`37.03s → 0.81s/epoch`; verified against `torch.einsum` within `1e-6`).</li>
+              <li><strong>Portable Containers:</strong> `scmagnify-scelixir:1.0` (`core-cpu` &amp; `gpu-cuda`) + Gemini Interactions API &amp; Cloud Run GPU worker.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div style="font-size:0.82rem;color:var(--muted);">Verified via rootless `pytest` (`9 passed` in `test_active_edge_isomorphism.py` &amp; `test_gemini_cloud_runner.py`) and `43/43` `scElixir` backend tests.</div>
+    </section>
+
+    <!-- SLIDE 3 -->
+    <section class="slide" data-notes="Walk through Phase 1 reproduction results on human CD34+ hematopoiesis (6,881 cells) and mouse embryonic pancreas (E15.5) matching Chen et al. (2026) Figs. 2-6.">
+      <div>
+        <div class="slide-kicker">02 / Benchmark Reproduction (Chen et al., Feb 2026)</div>
+        <h2>Faithful Reproduction Across Human Hematopoiesis &amp; Mouse Pancreas</h2>
+        <table class="s-table">
+          <thead>
+            <tr><th>Dataset &amp; Branch</th><th>Cells / Triples</th><th>Recovered Master Regulators (Lag τ)</th><th>Quantitative Benchmark Result</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Human CD34+ Erythroid</strong></td>
+              <td>`6,881` cells / `1.06M` triples</td>
+              <td><span class="gene">KLF1</span> (#1, 3.34), <span class="gene">FLI1</span> (3.33), <span class="gene">GATA2</span> (3.53), <span class="gene">BCL11A</span> (3.16), <span class="gene">GATA1</span> (3.69)</td>
+              <td><strong>`2.43×`</strong> gold enrichment vs <strong>`2.17×`</strong> equal-epoch `nobasal`; hub–lag $\rho = +0.438$ ($p = 2.9 \times 10^{-12}$)</td>
+            </tr>
+            <tr>
+              <td><strong>Human CD34+ Monocytic</strong></td>
+              <td>`HSC/HMP → Mono`</td>
+              <td><span class="gene">RREB1</span> (3.47), <span class="gene">BCL11A</span> (2.93), <span class="gene">IRF8</span> (2.57), <span class="gene">KLF5</span> (3.43), <span class="gene">SPI1</span> (3.19)</td>
+              <td>Captures pioneer RNA-before-MLM activity lag shifts &amp; `HBB` Ery-specific locus opening</td>
+            </tr>
+            <tr>
+              <td><strong>Human CD34+ CLP Lymphoid</strong></td>
+              <td>`HSC → CLP` (3 seeds)</td>
+              <td><span class="gene">IRF8</span> (3.18), <span class="gene">RUNX2</span> (3.38), <span class="gene">EBF1</span> (3.63), <span class="gene">BCL11A</span> (3.50), <span class="gene">DNMT1</span> (2.67)</td>
+              <td>3-seed Jaccard <strong>`0.803`</strong> (<strong>`4.30×`</strong> &gt; inter-lineage); `RF4` epigenetic silencing `FDR = 6.23e-5`</td>
+            </tr>
+            <tr>
+              <td><strong>Mouse Pancreas α vs β</strong></td>
+              <td>`E15.5` Endocrine</td>
+              <td><span class="gene">Isl1</span> (3.10), <span class="gene">Mafb</span> (3.19), <span class="gene">Pax6</span> (3.40), <span class="gene">Fev</span> (3.38), <span class="gene">Sox9</span> (3.28), <span class="gene">Neurog3</span> (3.21)</td>
+              <td>Transmembrane `infer_signal_pairs`: `FGFR2→SOX9`, `KIT→NEUROG3`, `GIPR→PAX6`, `NOTCH2→SOX9`</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div style="font-size:0.82rem;color:var(--muted);">Rendered in strict `scMagnify` manuscript aesthetics (`fig1a_paper_repro_hematopoiesis.png` &amp; `fig1b_paper_repro_regfactors_pancreas.png`).</div>
+    </section>
+
+    <!-- SLIDE 4 -->
+    <section class="slide" data-notes="Detail the 5 human cohorts and mouse multiome stages harmonized for the scElixir lung developmental continuum, plus the standalone pure-ATAC basal ablation and independent-seed RegVelo check.">
+      <div>
+        <div class="slide-kicker">03 / Multiomic Developmental Lung Atlas</div>
+        <h2>Harmonizing Human (5 PCW → 56.8 yr) &amp; Mouse (E12.5 → 7 wk) Multiomes</h2>
+        <div class="grid-3">
+          <div class="box">
+            <h3>5 Human RNA + ATAC Cohorts</h3>
+            <p><strong>10,256</strong> clean epithelial cells (`803` off-lineage doublets purged) across `He2022` (5–22 PCW), `Kim2022` 10x Multiome, `Duong2022` paired RNA+scTHS-ATAC (`427,694` peaks), `LungMAP`, and `HuBMAP` SNARE-seq2 (`+ 11,486` adult snATAC nuclei).</p>
+          </div>
+          <div class="box">
+            <h3>Pure-ATAC Basal Ablation</h3>
+            <p>Alongside the `9,498`-edge hybrid scaffold, a <strong>standalone `8,270`-edge pure-ATAC ablation</strong> (zero prior eGRN links) independently recovered `ETV5` (78 tgs), `CEBPA` (69), `NKX2-1` (61), `FOXA2` (60), `CEBPD` (54), `STAT3` (84), and `EHF` (136).</p>
+          </div>
+          <div class="box">
+            <h3>Mouse Multiome &amp; Velocity</h3>
+            <p>`4,084` `E12.5 → P3` epithelial cells (`163,878` `E17.5` Multiome peaks) + independent-seed `VelocityKernel` (`seed=43`) vs `PseudotimeKernel` (`seed=42`) audit on `mouse_after_regvelo.h5ad`: <strong>Spearman $\rho = 0.878$ ($p = 2.65 \times 10^{-16}$)</strong>.</p>
+          </div>
+        </div>
+      </div>
+      <div style="font-size:0.82rem;color:var(--muted);">Stage-informed pseudotime (`60% DPT + 40% donor age rank`) + within-fate capture-depth normalization ($\tilde{E}_{g,f}$) mitigate cross-assay batch boundaries.</div>
+    </section>
+
+    <!-- SLIDE 5: Q1 -->
+    <section class="slide" data-notes="Directly answer Question 1: who are the master regulators within each developmental timepoint, and what transient or artifactual signals were inflated in prior static SCENIC+?">
+      <div>
+        <div class="slide-kicker">04 / Question 1 — Within-Timepoint Regulation vs SCENIC+</div>
+        <h2>Separating Long-Lag Master Pioneers from Static `SCENIC+` Transients</h2>
+        <table class="s-table">
+          <thead>
+            <tr><th>Epoch</th><th>Validated Long-Lag Master Regulators ($\tau \ge 2.65$)</th><th>Short-Lag Effectors &amp; Transients Filtered vs SCENIC+</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>T1: Early/Mid Fetal</strong><br/>(5–16 PCW)</td>
+              <td><span class="gene">FOXA2</span> (τ=3.23), <span class="gene">SOX2</span> (3.17), <span class="gene">MYCN</span> (2.98), <span class="gene">HMGA2</span> (2.83), <span class="gene">ETV5</span> (2.78), <span class="gene">NKX2-1</span> (2.69), <span class="gene">SOX9</span> (2.66)</td>
+              <td><strong>Short-lag switches:</strong> <span class="gene">SMAD3</span> (1.96), <span class="gene">LEF1</span> (1.98), <span class="gene">ID2</span> (2.53).<br/><strong>Transients/Artifacts:</strong> <span class="gene">EGR1/FOS/JUN</span> (IEGs), <span class="gene">DDIT3</span> (2.15), <span class="gene">E2F1</span> (mitotic), <span class="gene">WT1</span> (`889`-tg doublet).</td>
+            </tr>
+            <tr>
+              <td><strong>T2: Late Fetal</strong><br/>(18–23 PCW)</td>
+              <td><span class="gene">HOPX</span> (3.28), <span class="gene">TFCP2L1</span> (3.02), <span class="gene">ETV5</span> (3.00), <span class="gene">FOXA2</span> (2.97), <span class="gene">CEBPD</span> (2.94), <span class="gene">NKX2-1</span> (2.85), <span class="gene">SOX9</span> (2.74)</td>
+              <td>Canalicular split; <span class="gene">MYCN</span> (1.56), <span class="gene">NR3C1</span> (1.87), <span class="gene">HMGA2</span> (2.48, final active window), <span class="gene">TEAD1</span> (2.49) act as transition switches.</td>
+            </tr>
+            <tr>
+              <td><strong>T3: Perinatal / Infant</strong><br/>(D0–3 yr)</td>
+              <td><span class="gene">TFCP2L1</span> (4.09), <span class="gene">HOPX</span> (3.49), <span class="gene">CEBPD</span> (3.47), <span class="gene">NR3C1</span> (3.45), <span class="gene">NKX2-1</span> (3.37), <span class="gene">TEAD1</span> (3.23), <span class="gene">ETV5</span> (3.07), <span class="gene">EHF</span> (3.05), <span class="gene">CEBPA</span> (2.85)</td>
+              <td><span class="gene">HMGA2</span> silenced (`0` tgs); <span class="gene">SOX9</span> decays ($\tau = 1.94$); birth surge triggers acute <span class="gene">FOS</span> (65 SCENIC+ tgs) &amp; <span class="gene">DDIT3/EPAS1</span> waves.</td>
+            </tr>
+            <tr>
+              <td><strong>T4: Pediatric / Adult</strong><br/>(9–56.8 yr)</td>
+              <td><span class="gene">HOPX</span> (3.82), <span class="gene">ETV5</span> (3.57), <span class="gene">CEBPD</span> (2.84), <span class="gene">MYRF</span> (2.66) + homeostatic <span class="gene">NKX2-1 / TEAD1 / NR3C2 / EHF</span></td>
+              <td><strong>Zero-bias silencing:</strong> <span class="gene">SOX9, HMGA2, MYCN, SOX2, SPDEF</span> all drop to <strong>`0` targets</strong> in adult `T4`, while `snATAC` confirms open `NKX2-1 / TEAD1` chromatin.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div style="font-size:0.82rem;color:var(--muted);">Two-stage separation: lag $\tau$ resolves rapid effectors, while `RegFactor` decomposition + IEG hygiene isolates harvest boundary spikes (`Fig. 2b, f`).</div>
+    </section>
+
+    <!-- SLIDE 6: Q2 PART A -->
+    <section class="slide" data-notes="Answer Question 2 Part A: Pan-Lung lineage core vs AT2 identity across development, supported by empirical chr14 NKX2-1 and chr8 SFTPC ATAC tracks.">
+      <div>
+        <div class="slide-kicker">05 / Question 2A — Persistent Pan-Lung &amp; AT2 Identity</div>
+        <h2>Pan-Lung Pioneer Core (`33` TFs) vs Alveolar AT2 Maturation Lock</h2>
+        <div class="grid-2">
+          <div class="box" style="border-top:4px solid var(--orange);">
+            <h3>1. Pan-Lung Epithelial Lineage Core (`4/4` Epochs)</h3>
+            <p><strong>Persistent Selectors:</strong> <span class="gene">NKX2-1</span> (`P = 0.625`), <span class="gene">FOXP1</span> (`0.632`), <span class="gene">KLF6</span> (`0.793`), <span class="gene">KLF5</span> (`0.618`), <span class="gene">ELF3</span> (`0.748`), <span class="gene">STAT3</span> (`0.676`), <span class="gene">MECOM</span> (`0.776`), <span class="gene">NR3C1</span> (`0.629`), co-anchored with <span class="gene">FOXA1/FOXA2</span>.</p>
+            <ul style="margin-top:0.55rem;">
+              <li>Balanced near the center of the ternary specificity triangle (`NKX2-1` shares `0.30 / 0.30 / 0.40`; `72` shared pan-epithelial targets).</li>
+              <li>Empirical `chr14` `NKX2-1` ATAC tracks (`Fig. 4d`) confirm open peaks across <strong>all four</strong> epithelial compartments (`Neonatal Alv, AT2, AT1, Airway/Club`).</li>
+            </ul>
+          </div>
+          <div class="box" style="border-top:4px solid var(--at2);">
+            <h3>2. Alveolar Type 2 (AT2) Identity Program</h3>
+            <p><strong>Persistent Masters:</strong> <span class="gene">ETV5</span> (Tip→AT2 bridge, `p_AT2 = 0.57`), <span class="gene">CEBPD</span> (`P = 0.769`, `p_AT2 = 0.53`), <span class="gene">TFCP2L1</span> (`p_AT2 = 0.54`, `Club = 0.006`), <span class="gene">CEBPA</span> (`p_AT2 = 0.51`), <span class="gene">RORA</span>, <span class="gene">ZBTB16</span>, <span class="gene">PPARG</span>.</p>
+            <ul style="margin-top:0.55rem;">
+              <li><strong>Cross-Species Conservation:</strong> `Etv5` (#1 mouse `AT2` `RSS = 0.570`) and `Tfcp2l1` (`M_AT2 = 0.023` vs `0.000` in `M_AT1/Club`, `RSS = 0.494`).</li>
+              <li>Empirical `chr8` `SFTPC` enhancer accessibility (`Fig. 4a, e`) is sharply elevated in `AT2` over `AT1` and `Club`.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div style="font-size:0.82rem;color:var(--muted);">Capture-depth normalization ($\tilde{E}_{g,f}$) + `11,486` adult `HuBMAP` `snATAC` nuclei resolve whole-cell vs nuclear UMI differences cleanly.</div>
+    </section>
+
+    <!-- SLIDE 7: Q2 PART B -->
+    <section class="slide" data-notes="Answer Question 2 Part B: AT1 gas-exchange identity and Club/Secretory + human-specific SCGB3A2+ RAS identity vs mouse.">
+      <div>
+        <div class="slide-kicker">06 / Question 2B — Persistent AT1 &amp; Club / RAS Identity</div>
+        <h2>HOPX/MYRF/TEAD1 Govern AT1; SPDEF/SOX2 vs EHF Partition Club &amp; RAS</h2>
+        <div class="grid-2">
+          <div class="box" style="border-top:4px solid var(--at1);">
+            <h3>3. Alveolar Type 1 (AT1) Identity Program</h3>
+            <p><strong>Persistent Selectors &amp; Co-Factors (`4/4` Epochs):</strong> <span class="gene">HOPX</span> (`P = 0.898`, `p_AT1 = 0.50`), <span class="gene">MYRF</span> (`P = 0.735`, `p_AT1 = 0.47`), <span class="gene">TEAD1</span> (`P = 0.676`, `p_AT1 = 0.42`, adult ATAC `0.321`), <span class="gene">NR3C2</span> (`0.773`), <span class="gene">YAP1/WWTR1</span>.</p>
+            <ul style="margin-top:0.55rem;">
+              <li>Co-bind `chr6` `AGER` &amp; `CAV1` cis-enhancers (`Fig. 4b, f`), where empirical ATAC peak height is sharply restricted to `AT1`.</li>
+              <li>Conserved in mouse (`Hopx` `M_AT1 = 0.417`; `Tead1` `M_AT1 = 0.282` vs `M_Club = 0.132`).</li>
+            </ul>
+          </div>
+          <div class="box" style="border-top:4px solid var(--club);">
+            <h3>4. Club / Secretory &amp; Human `SCGB3A2+` RAS</h3>
+            <p><strong>Canonical Club Masters:</strong> <span class="gene">SPDEF</span> (<strong>`100%` Club purity: `47` Club vs `0` AT2 / `0` AT1 targets</strong>), <span class="gene">HEY1</span> (`63` Club vs `0/0`), <span class="gene">SOX2</span> (`p_Club = 0.79`), <span class="gene">XBP1</span> (`0.50`), <span class="gene">HES1</span> (`0.45`).</p>
+            <ul style="margin-top:0.55rem;">
+              <li><strong>Human Distal RAS (`SCGB3A2+ / SFTPB+`):</strong> <span class="gene">EHF</span> (`4/4` epochs, `157/162/165` targets, dual `AT2 0.37 / Club 0.35`, `RAS ATAC = 0.264`) + `NKX2-1` co-bind `SCGB3A2` (`Fig. 4c`), absent in mouse (`Ehf` `M_AT2/AT1 = 0.000`).</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div style="font-size:0.82rem;color:var(--muted);">Distinguishes physiological human `RAS ↔ AT2` poise (`SCGB3A2+/EHF+`) from pathological `SOX2+/KRT5+` bronchiolization.</div>
+    </section>
+
+    <!-- SLIDE 8: MULTI-PIPELINE SYNTHESIS -->
+    <section class="slide" data-notes="Explain how combining scMagnify with SCENIC+, LSO-Ridge, PertFormer, and LINCS resolves three critical blind spots in cellular reprogramming.">
+      <div>
+        <div class="slide-kicker">07 / Interdisciplinary Synthesis (`scMagnify + SCENIC+ + LSO-Ridge + PertFormer`)</div>
+        <h2>Resolving Three Critical Reprogramming Blind Spots</h2>
+        <div class="grid-3">
+          <div class="box">
+            <h3>1. Steroid Paradox Resolved</h3>
+            <p>Cancer-line LINCS signature reversal ranked <strong>budesonide (#5), triamcinolone (#10) &amp; dexamethasone (#18)</strong> as top hits. `scMagnify` proves `NR3C1` ($\tau = 3.45$) and `CD74/CD44 → CEBPD` (`q = 0.0017`) enforce the <strong>adult AT2 maturation lock</strong> — steroids must be <em>withdrawn</em>!</p>
+          </div>
+          <div class="box">
+            <h3>2. Rescuing Underpowered Pioneers</h3>
+            <p>Static `SCENIC+` gave `ETV5` only `21` targets and `HMGA2` `3` targets. `scMagnify` + `LSO-Ridge` recover `ETV5` (`97–114` targets, $\tau = 3.10$), `HMGA2` (`REI = 0.0756`), `HMGA1` (`#2` activator, `REI = 0.0844`), and `#1` KO unlocker `CEBPD` (`REI = 0.0984`).</p>
+          </div>
+          <div class="box">
+            <h3>3. Focal vs Global OSKM Audit</h3>
+            <p>`LungTF_Optimal_Tip` achieves <strong>`93.0%` focal tip recovery &amp; `21.4%` global gap closure</strong> at `0.002` off-target burden — <strong>`628×` cleaner</strong> than sustained `OSKM` (`9.3%` focal, `0.75%` global, `1.256` off-target from `SOX2` squamous + `POU5F1` teratoma drift).</p>
+          </div>
+        </div>
+      </div>
+      <div style="font-size:0.82rem;color:var(--muted);">Plasma-membrane `infer_signal_pairs` (`1,720` tested, `913` `q < 0.05`) couples `FGF10 → FGFR2 → FOXP2/ETV5` and `NRG1 → ERBB2/3 → ETV5/SOX9`.</div>
+    </section>
+
+    <!-- SLIDE 9: 3-PHASE PROTOCOL -->
+    <section class="slide" data-notes="Present the streamlined low-MOI 3-phase partial developmental reversal blueprint and 3 mandatory controls for primary human adult AT2 organoids.">
+      <div>
+        <div class="slide-kicker">08 / Streamlined Reversal Blueprint (`Adult AT2 → Distal Tip`)</div>
+        <h2>Low-MOI 3-Phase Protocol &amp; Mandatory Organoid Controls</h2>
+        <div class="grid-3">
+          <div class="box" style="border-left:4px solid #2d3a8c;">
+            <h3>Phase I: Days 0–2<br/>Single-LV + LNP Brake Release</h3>
+            <ul>
+              <li>Single bicistronic <strong>`Tet-On SOX9-P2A-HMGA2`</strong> (`MOI <= 2`, Dox-On `d0–5`).</li>
+              <li>Non-viral <strong>`LNP-siRNA CEBPA + CEBPD`</strong> (`25 nM`, `d0`) + withdraw Dexamethasone.</li>
+              <li>Niche media: <strong>`FGF10 (50 ng/mL)` + `CHIR99021 (3 µM)` + `RepSox (1 µM)`</strong>.</li>
+            </ul>
+          </div>
+          <div class="box" style="border-left:4px solid var(--at2);">
+            <h3>Phase II: Days 2–5<br/>Replication-Coupled Unlock</h3>
+            <ul>
+              <li>Endogenous <strong>`FGF10 → FGFR2 → ETV5`</strong> preserves `NKX2-1 / FOXA2` core (`MYCN` modRNA optional only if `Ki67+ < 10%`).</li>
+              <li><strong>Days 1–3 (post-S-phase entry):</strong> `50 nM Decitabine` <em>or</em> catalytic `DNMT1i GSK3484862` (`500 nM`).</li>
+            </ul>
+          </div>
+          <div class="box" style="border-left:4px solid var(--orange);">
+            <h3>Phase III: Days 5–17<br/>Dox-Off &amp; 3 Mandatory Controls</h3>
+            <ul>
+              <li>Washout Dox at `Day 5` (`SOX9-P2A-HMGA2` off; `SOX2+/KRT5+ < 5%`).</li>
+              <li><strong>3 Controls:</strong> (1) Niche + Empty-Vector/NT-siRNA, (2) `+DCI` `SFTPC+` rescue, (3) <strong>Single-cell clonal `AT2 + AT1` split</strong>.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div style="font-size:0.82rem;color:var(--muted);">Note: All reprogramming interventions represent mechanistically constrained in-silico hypotheses requiring prospective donor-replicated validation.</div>
+    </section>
+
+    <!-- SLIDE 10: ACTIONABLE CANDIDATES -->
+    <section class="slide" data-notes="Summarize the complete 16-candidate actionable wet-lab portfolio and safety guardrails.">
+      <div>
+        <div class="slide-kicker">09 / Actionable Wet-Lab Portfolio (`16` Candidates)</div>
+        <h2>Prioritized 16-Candidate Portfolio &amp; Safety Guardrails</h2>
+        <table class="s-table">
+          <thead>
+            <tr><th>Tier</th><th>Candidates (`n = 16`)</th><th>Delivery / Action</th><th>Primary Readout &amp; Safety Gate</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Tier 1: Tip Pioneers (`#1–4`)</strong></td>
+              <td><span class="gene">SOX9, HMGA2, MYCN, ETV5</span></td>
+              <td>`Tet-On SOX9-P2A-HMGA2` (`d0–5`) + `FGF10→ETV5` (`MYCN` backup)</td>
+              <td>`>=2.5×` `SOX9/CPM` cCRE opening over Control 1; `Dox-Off` silence by `d7`</td>
+            </tr>
+            <tr>
+              <td><strong>Tier 1B: Adult Brakes (`#5–7`)</strong></td>
+              <td><span class="gene">CEBPA, CEBPD, NR3C1</span></td>
+              <td>`LNP-siRNA CEBPA + CEBPD` (`d0`) + `0 nM Dexamethasone`</td>
+              <td>Reversible `SFTPC/LAMP3` attenuation; `>=60% SFTPC+` `+DCI` rescue at `d17`</td>
+            </tr>
+            <tr>
+              <td><strong>Tier 2: Identity Guards (`#8–14`)</strong></td>
+              <td><span class="gene">NKX2-1, FOXA2, TFCP2L1, TEAD1, MYRF, SOX2, EHF</span></td>
+              <td>Preserve `NKX2-1/FOXA2 >=85%`; exclude `SOX2+`; clonal `AT2/AT1` readout</td>
+              <td>`CDX2+ < 2%`, `SOX2+/KRT5+ < 5%`, clonal `SFTPC+` AT2 &amp; `AGER+/MYRF+` AT1</td>
+            </tr>
+            <tr>
+              <td><strong>Tier 3: Niche &amp; Epigenetic (`#15–16`)</strong></td>
+              <td><span class="gene">FGFR2 (FGF10/CHIR), TGFBR2 (RepSox + DNMT1i)</span></td>
+              <td>`50 ng/mL FGF10` + `3 µM CHIR` + `1 µM RepSox` + `d1–3` `Decitabine/GSK3484862`</td>
+              <td>Sustains endogenous `ETV5/LEF1`; blocks `SMAD3` `AT1/PATS` arrest &amp; `G0` toxicity</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div style="font-size:0.82rem;color:var(--muted);">Synchronized 1:1 with `ACTIONABLE_CANDIDATES_SCMAGNIFY.md` and `actionable_candidates_scmagnify.csv` (`16` candidates).</div>
+    </section>
+
+    <!-- SLIDE 11: CLOSING -->
+    <section class="slide dark" data-notes="Conclude with deliverables summary: stabilized scMagnify-private repo, Docker CPU/GPU stack, scElixir backend integration, workflow migration guide, and peer-reviewed report.">
+      <div>
+        <div class="slide-kicker">10 / Summary &amp; Peer-Reviewed Deliverables</div>
+        <h1>Reproducible Code, Containers &amp; Migration Blueprint Ready</h1>
+        <p class="subtitle">
+          Every mathematical patch (`12` fixes), multiomic GRN table, publication figure (`300 DPI PNG + SVG`), Docker image (`scmagnify-scelixir:1.0`), organ migration workflow (`WORKFLOW_MIGRATION_SCMAGNIFY.md`), and independent GRN/reprogramming peer review (`8` Major + `8` Minor critiques resolved) is version-controlled across `scMagnify-private` (`scelixir-repro`) and `scElixir_Claude_Hackerthon` (`feat/scmagnify-multiome-repro`).
+        </p>
+      </div>
+      <div class="grid-3">
+        <div class="box"><h3>Repositories &amp; Tests</h3><p>`scMagnify-private` (`9/9` rootless tests) + `scElixir` (`43/43` backend tests)</p></div>
+        <div class="box"><h3>Migration &amp; Cloud</h3><p>`WORKFLOW_MIGRATION_SCMAGNIFY.md` + Gemini `2.5-flash` Interactions &amp; Cloud Run GPU worker</p></div>
+        <div class="box"><h3>Next Wet-Lab Step</h3><p>3-donor adult human `HTII-280+` AT2 organoid pilot with Controls 1–3 + 10x Multiome</p></div>
+      </div>
+    </section>
+
+    <div class="notes-drawer" id="notes-box"></div>
+    <div class="deck-footer">
+      <div id="slide-counter" style="font-weight:600;color:var(--muted);">Slide 1 of 11</div>
+      <div class="ctrl-btns">
+        <button id="btn-prev" aria-label="Previous slide">← Prev</button>
+        <button id="btn-next" aria-label="Next slide">Next →</button>
+        <button id="btn-notes" aria-label="Toggle speaker notes">Speaker Notes (N)</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const slides = Array.from(document.querySelectorAll(".slide"));
+    let idx = 0;
+    const counter = document.getElementById("slide-counter");
+    const notesBox = document.getElementById("notes-box");
+
+    function show(n) {
+      idx = (n + slides.length) % slides.length;
+      slides.forEach((s, i) => s.classList.toggle("active", i === idx));
+      counter.textContent = `Slide ${idx + 1} of ${slides.length}`;
+      notesBox.textContent = "Speaker Notes: " + (slides[idx].dataset.notes || "");
+    }
+
+    document.getElementById("btn-prev").addEventListener("click", () => show(idx - 1));
+    document.getElementById("btn-next").addEventListener("click", () => show(idx + 1));
+    document.getElementById("btn-notes").addEventListener("click", () => notesBox.classList.toggle("open"));
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "ArrowRight" || e.key === " ") { e.preventDefault(); show(idx + 1); }
+      if (e.key === "ArrowLeft") { e.preventDefault(); show(idx - 1); }
+      if (e.key.toLowerCase() === "n") notesBox.classList.toggle("open");
+    });
+    show(0);
+  </script>
+</body>
+</html>

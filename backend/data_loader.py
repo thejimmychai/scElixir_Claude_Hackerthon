@@ -115,10 +115,16 @@ class Dataset:
         return self._cache["state_tfs"]
 
     # -- Stage C -------------------------------------------------------------
-    def grn_scores(self) -> List[Dict[str, Any]]:
-        """GRN_network_scores_enhancer.csv -> list of hub score rows (TF first col)."""
-        if "grn" not in self._cache:
-            path = os.path.join(config.DATA_DIR, "GRN_network_scores_enhancer.csv")
+    def grn_scores(self, route: str = "scenicplus") -> List[Dict[str, Any]]:
+        """Load per-cluster hub centrality table for Stage C (`scenicplus` or `scmagnify`)."""
+        cache_key = f"grn:{route}"
+        if cache_key not in self._cache:
+            fname = (
+                "GRN_network_scores_scmagnify.csv"
+                if route == "scmagnify"
+                else "GRN_network_scores_enhancer.csv"
+            )
+            path = os.path.join(config.DATA_DIR, fname)
             out = []
             with open(path, newline="", encoding="utf-8") as fh:
                 reader = csv.reader(fh)
@@ -139,8 +145,8 @@ class Dataset:
                             "cluster": d.get("cluster"),
                         }
                     )
-            self._cache["grn"] = out
-        return self._cache["grn"]
+            self._cache[cache_key] = out
+        return self._cache[cache_key]
 
     # -- Stage D -------------------------------------------------------------
     def tf_recipe(self) -> List[Dict[str, Any]]:

@@ -20,18 +20,10 @@ from ..jobs import ComputeUnavailable
 TOP_HUBS = 40
 
 
-def _hub_table() -> Dict[str, Any]:
-    """Rank hubs across the enhancer GRN.
-
-    GRN_network_scores_enhancer.csv is not one flat node list — it is 8 stacked
-    per-cell-state centrality tables (clusters APr/AT1l/AT2l/Cili/EpiC/Meso/PNEC/TiP),
-    each an independent ~2000-edge sub-network in which every TF appears once. So we
-    (a) count edges per cluster (not summed into one inflated total), and (b) build a
-    diverse hub list by keeping, for each TF, the cluster where its degree centrality
-    peaks — otherwise the top rows collapse to the same few TFs repeated 8x.
-    """
+def _hub_table(route: str = "scenicplus") -> Dict[str, Any]:
+    """Rank hubs across the requested GRN route (`scenicplus` or `scmagnify`)."""
     ds = data_loader.get()
-    rows = ds.grn_scores()
+    rows = ds.grn_scores(route=route)
 
     edges_per_cluster: Dict[str, int] = {}
     best_by_tf: Dict[str, Dict[str, Any]] = {}
@@ -95,6 +87,9 @@ def get(
         if route == "scenicplus":
             note = ("The enhancer-aware (SCENIC+) GRN was inferred only for lung epithelial in the "
                     "reference run. Candidate regulators (Stage-B master TFs) are shown.")
+        elif route == "scmagnify":
+            note = ("The multi-scale dynamic scMagnify GRN was inferred for lung epithelial across "
+                    "5 PCW–57 yr development. Candidate regulators (Stage-B master TFs) are shown.")
         else:
             note = ("No CellOracle base-GRN has been computed for this layer. Candidate regulators "
                     "(Stage-B master TFs) are shown; the CellOracle route needs the layer's sub-atlas.")
@@ -107,21 +102,30 @@ def get(
             "candidate_hubs": cand,
         }
 
-    table = _hub_table()
+    table = _hub_table(route=route)
+    detail = (
+        "scMagnify multi-scale dynamic Granger eGRNs (lag=5, Tucker rank=5; contaminant & IEG-filtered)"
+        if route == "scmagnify"
+        else "SCENIC+ enhancer-aware eRegulons (13/16 canonical epithelial TFs recovered)"
+    )
     return {
         "status": "cached",
         "organ": organ,
         "layer": layer,
         "route": route,
-        "route_detail": "SCENIC+ enhancer-aware eRegulons (13/16 canonical epithelial TFs recovered)",
+        "route_detail": detail,
         "n_clusters": table["n_clusters"],
         "clusters": table["clusters"],
         "edges_per_cluster": table["edges_per_cluster"],
         "n_edges": table["n_edges_total"],
         "hubs": table["hubs"],
         "candidate_hubs": cand,
-        "artifact_uri": "external://artifact-store/epi_links.celloracle.links",
-        "artifact_status": "external_not_in_bundle",
+        "artifact_uri": (
+            "data/reference/GRN_network_scores_scmagnify.csv"
+            if route == "scmagnify"
+            else "external://artifact-store/epi_links.celloracle.links"
+        ),
+        "artifact_status": "bundled_reference" if route == "scmagnify" else "external_not_in_bundle",
     }
 
 

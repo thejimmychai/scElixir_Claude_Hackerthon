@@ -97,6 +97,18 @@ class StageC(unittest.TestCase):
         self.assertEqual(c["status"], "not_computed")
         self.assertNotIn("hubs", c)  # guardrail 4: no GRN table for un-inferred layers
 
+    def test_scmagnify_route_hubs_and_guardrails(self):
+        _, c = get("/stage/C", organ="lung", layer="epithelial", route="scmagnify")
+        self.assertEqual(c["status"], "cached")
+        self.assertEqual(c["route"], "scmagnify")
+        tfs = [h["tf"] for h in c["hubs"]]
+        self.assertEqual(len(tfs), len(set(tfs)))
+        self.assertNotIn("WT1", tfs)   # off-lineage mesothelial artifact purged
+        self.assertNotIn("EGR1", tfs)  # dissociation IEG artifact purged
+        _, c_mes = get("/stage/C", organ="lung", layer="mesenchymal", route="scmagnify")
+        self.assertEqual(c_mes["status"], "not_computed")
+        self.assertNotIn("hubs", c_mes)
+
 
 class StageD(unittest.TestCase):
     def test_recipe_reference(self):

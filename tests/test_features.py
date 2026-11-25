@@ -205,7 +205,7 @@ class RoutesAndValidation(Isolated):
 class Capabilities(Isolated):
     def test_report_lists_every_engine_and_paths(self):
         rep = capabilities.report()
-        self.assertEqual(set(rep["engines"]), {"lincs_tahoe", "scvi_atlas", "celloracle", "scenicplus", "pertformer"})
+        self.assertEqual(set(rep["engines"]), {"lincs_tahoe", "scvi_atlas", "celloracle", "scenicplus", "scmagnify", "pertformer"})
         self.assertIn("external_inputs", rep["paths"])
         self.assertNotIn("network", rep)  # network is only probed on request
 

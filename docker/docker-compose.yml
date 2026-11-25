@@ -1,0 +1,41 @@
+services:
+  scmagnify-cpu:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+      target: core-cpu
+    image: scmagnify-scelixir:1.0
+    working_dir: /workspace
+    environment:
+      - OMP_NUM_THREADS=2
+      - OPENBLAS_NUM_THREADS=2
+      - SCMAGNIFY_DATA=/opt/scmagnify_cache
+      - GEMINI_API_KEY=${GEMINI_API_KEY:-}
+    volumes:
+      - ..:/workspace
+      - ${SCMAGNIFY_CACHE_HOST:-/home/antigravity/scm_zen_cache}:/opt/scmagnify_cache
+      - ${DATA_WORKSPACE_HOST:-/home/antigravity/data_workspace}:/data_workspace
+      # Optional: mount host CA bundle in corporate/cloud TLS proxy environments:
+      # - /etc/ssl/certs:/etc/ssl/certs:ro
+
+  scmagnify-gpu:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+      target: gpu-cuda
+    image: scmagnify-scelixir:1.0-gpu
+    working_dir: /workspace
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    environment:
+      - SCMAGNIFY_DATA=/opt/scmagnify_cache
+      - GEMINI_API_KEY=${GEMINI_API_KEY:-}
+    volumes:
+      - ..:/workspace
+      - ${SCMAGNIFY_CACHE_HOST:-/home/antigravity/scm_zen_cache}:/opt/scmagnify_cache
+      - ${DATA_WORKSPACE_HOST:-/home/antigravity/data_workspace}:/data_workspace

@@ -40,8 +40,8 @@ REFERENCE_CASE = {
 # Stage-C routes the API accepts, and the (organ, layer, route) combinations whose
 # GRN actually exists. The reference GRN_network_scores_enhancer.csv is the
 # SCENIC+ (enhancer-aware) run for lung epithelial; no CellOracle GRN is cached.
-GRN_ROUTES = ("scenicplus", "celloracle")
-GRN_COMPUTED = {("lung", "epithelial", "scenicplus")}
+GRN_ROUTES = ("scenicplus", "celloracle", "scmagnify")
+GRN_COMPUTED = {("lung", "epithelial", "scenicplus"), ("lung", "epithelial", "scmagnify")}
 
 HOST_DEFAULT = "127.0.0.1"
 PORT_DEFAULT = int(os.environ.get("REPRO_PORT", "8765"))

@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>scMagnify × scElixir Multi-Scale Lung Explorer</title>
+  <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
+</head>
+<body class="bg-transparent text-[var(--foreground)] antialiased p-0 m-0 select-none">
+  <div class="py-2 space-y-2.5">
+    <!-- Top Control Bar -->
+    <div class="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-[var(--card-border)] text-xs">
+      <div class="flex items-center gap-1.5">
+        <button id="tab-q1" data-mode="q1" class="px-2.5 py-1 rounded border border-[var(--border)] bg-[var(--primary)] text-[var(--primary-foreground)] font-medium transition-colors">
+          Q1: Lag τ vs SCENIC+
+        </button>
+        <button id="tab-q2" data-mode="q2" class="px-2.5 py-1 rounded border border-[var(--border)] bg-[var(--card)] text-[var(--muted-foreground)] hover:text-[var(--foreground)] transition-colors">
+          Q2: Lineage Persistence
+        </button>
+        <button id="tab-reprog" data-mode="reprog" class="px-2.5 py-1 rounded border border-[var(--border)] bg-[var(--card)] text-[var(--muted-foreground)] hover:text-[var(--foreground)] transition-colors">
+          AT2 → Tip Reversal
+        </button>
+      </div>
+      <div id="sub-controls" class="flex items-center gap-2">
+        <label for="epoch-select" class="text-[var(--muted-foreground)]">Epoch:</label>
+        <select id="epoch-select" class="px-2 py-1 rounded border border-[var(--border)] bg-[var(--card)] text-[var(--foreground)] text-xs">
+          <option value="T1">T1 Fetal (5–16 PCW)</option>
+          <option value="T2">T2 Late Fetal (18–23 PCW)</option>
+          <option value="T3">T3 Perinatal (D0–3 yr)</option>
+          <option value="T4">T4 Adult (9–57 yr)</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Interactive Canvas -->
+    <div class="relative w-full">
+      <canvas id="main-canvas" class="w-full block cursor-crosshair" height="215"></canvas>
+    </div>
+
+    <!-- Compact Live Telemetry Strip -->
+    <div id="readout-strip" class="grid grid-cols-4 gap-2 pt-2 border-t border-[var(--card-border)] text-xs">
+      <div>
+        <div class="text-[var(--muted-foreground)]">Selected Factor</div>
+        <div id="ro-tf" class="font-mono font-semibold text-[var(--foreground)] truncate">NKX2-1 (Pan-Lung Core)</div>
+      </div>
+      <div>
+        <div class="text-[var(--muted-foreground)]">Effective Lag τ</div>
+        <div id="ro-lag" class="font-mono tabular-nums text-[var(--foreground)]">τ = 2.69 (Long-Lag)</div>
+      </div>
+      <div>
+        <div class="text-[var(--muted-foreground)]">scMagnify vs SCENIC+</div>
+        <div id="ro-cent" class="font-mono tabular-nums text-[var(--foreground)]">0.287 vs 0.000</div>
+      </div>
+      <div>
+        <div class="text-[var(--muted-foreground)]">Persistence / Gap</div>
+        <div id="ro-pers" class="font-mono tabular-nums text-[var(--foreground)]">Persist = 0.625 (4/4)</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const Q1_DATA = {
+      T1: [
+        { tf: "NKX2-1", tau: 2.688, cent: 0.287, scenic: 0.000, persist: 0.625, group: "Master", note: "Pan-Lung Core (4/4)" },
+        { tf: "SOX9",   tau: 2.655, cent: 0.217, scenic: 0.000, persist: 0.375, group: "Master", note: "Distal Tip Pioneer" },
+        { tf: "HMGA2",  tau: 2.833, cent: 0.060, scenic: 0.002, persist: 0.250, group: "Master", note: "Tip Chromatin Opener" },
+        { tf: "ETV5",   tau: 2.778, cent: 0.370, scenic: 0.000, persist: 0.578, group: "Master", note: "Tip→AT2 Bridge" },
+        { tf: "FOXA2",  tau: 3.230, cent: 0.243, scenic: 0.000, persist: 0.375, group: "Master", note: "Endoderm Pioneer" },
+        { tf: "MYCN",   tau: 2.975, cent: 0.243, scenic: 0.000, persist: 0.375, group: "Master", note: "Fetal Proliferation" },
+        { tf: "SOX2",   tau: 3.167, cent: 0.223, scenic: 0.036, persist: 0.375, group: "Master", note: "Proximal Stalk/Club" },
+        { tf: "SMAD3",  tau: 1.958, cent: 0.323, scenic: 0.000, persist: 0.375, group: "Effector", note: "Short-Lag TGFβ Switch" },
+        { tf: "LEF1",   tau: 1.984, cent: 0.113, scenic: 0.011, persist: 0.375, group: "Effector", note: "Short-Lag Wnt Switch" },
+        { tf: "ID2",    tau: 2.528, cent: 0.097, scenic: 0.000, persist: 0.735, group: "Effector", note: "BMP Tip Co-Regulator" },
+        { tf: "E2F1",   tau: 3.097, cent: 0.863, scenic: 0.000, persist: 0.375, group: "CellCycle", note: "Mitotic RegFactor" },
+        { tf: "DDIT3",  tau: 2.153, cent: 0.210, scenic: 0.000, persist: 0.760, group: "Stress", note: "Short-Lag ER Stress" },
+        { tf: "EGR1",   tau: 3.127, cent: 0.827, scenic: 0.033, persist: 0.000, group: "Artifact", note: "Dissociation IEG" },
+        { tf: "WT1",    tau: 1.150, cent: 0.000, scenic: 0.150, persist: 0.000, group: "Artifact", note: "SCENIC+ Mesothelial FP" }
+      ],
+      T2: [
+        { tf: "ETV5",   tau: 3.000, cent: 0.367, scenic: 0.000, persist: 0.578, group: "Master", note: "Canalicular Tip→AT2" },
+        { tf: "NKX2-1", tau: 2.854, cent: 0.293, scenic: 0.000, persist: 0.625, group: "Master", note: "Pan-Lung Core" },
+        { tf: "CEBPD",  tau: 2.940, cent: 0.263, scenic: 0.000, persist: 0.769, group: "Master", note: "Early AT2 Priming" },
+        { tf: "FOXA2",  tau: 2.966, cent: 0.243, scenic: 0.000, persist: 0.375, group: "Master", note: "Endoderm Co-Anchor" },
+        { tf: "SOX9",   tau: 2.736, cent: 0.213, scenic: 0.000, persist: 0.375, group: "Master", note: "Late Fetal Tip" },
+        { tf: "TFCP2L1",tau: 3.019, cent: 0.090, scenic: 0.000, persist: 0.375, group: "Master", note: "Conserved AT2 Master" },
+        { tf: "HOPX",   tau: 3.284, cent: 0.077, scenic: 0.000, persist: 0.898, group: "Master", note: "AT1 Co-Regulator" },
+        { tf: "CEBPA",  tau: 2.547, cent: 0.277, scenic: 0.000, persist: 0.375, group: "Effector", note: "Surfactant Wave" },
+        { tf: "TEAD1",  tau: 2.494, cent: 0.193, scenic: 0.000, persist: 0.676, group: "Effector", note: "Saccular AT1 Switch" },
+        { tf: "HMGA2",  tau: 2.479, cent: 0.060, scenic: 0.002, persist: 0.250, group: "Effector", note: "Final Fetal Window" },
+        { tf: "DDIT3",  tau: 2.603, cent: 0.210, scenic: 0.000, persist: 0.760, group: "Stress", note: "ER Stress Wave" }
+      ],
+      T3: [
+        { tf: "EHF",    tau: 3.048, cent: 0.552, scenic: 0.002, persist: 0.599, group: "Master", note: "Club / RAS Bridge" },
+        { tf: "ETV5",   tau: 3.066, cent: 0.381, scenic: 0.000, persist: 0.578, group: "Master", note: "Alveolarization AT2" },
+        { tf: "NKX2-1", tau: 3.370, cent: 0.288, scenic: 0.000, persist: 0.625, group: "Master", note: "Pan-Lung Core" },
+        { tf: "CEBPA",  tau: 2.846, cent: 0.281, scenic: 0.000, persist: 0.375, group: "Master", note: "Surfactant Lock" },
+        { tf: "CEBPD",  tau: 3.468, cent: 0.261, scenic: 0.000, persist: 0.769, group: "Master", note: "Glucocorticoid Lock" },
+        { tf: "NR3C1",  tau: 3.445, cent: 0.247, scenic: 0.000, persist: 0.629, group: "Master", note: "Birth Steroid Surge" },
+        { tf: "TEAD1",  tau: 3.229, cent: 0.194, scenic: 0.000, persist: 0.676, group: "Master", note: "Alveolar AT1 Master" },
+        { tf: "TFCP2L1",tau: 4.086, cent: 0.097, scenic: 0.000, persist: 0.375, group: "Master", note: "Perinatal AT2 Master" },
+        { tf: "MYRF",   tau: 3.072, cent: 0.097, scenic: 0.000, persist: 0.735, group: "Master", note: "AT1 Morphogenesis" },
+        { tf: "SOX9",   tau: 1.943, cent: 0.221, scenic: 0.000, persist: 0.375, group: "Effector", note: "Post-Birth Decay" },
+        { tf: "FOS",    tau: 3.355, cent: 0.401, scenic: 0.004, persist: 0.000, group: "Artifact", note: "65 SCENIC+ Targets" }
+      ],
+      T4: [
+        { tf: "CEBPD",  tau: 2.837, cent: 0.142, scenic: 0.000, persist: 0.769, group: "Master", note: "Adult AT2 Quiescence Lock" },
+        { tf: "HOPX",   tau: 3.817, cent: 0.064, scenic: 0.000, persist: 0.898, group: "Master", note: "Adult AT1 Co-Regulator" },
+        { tf: "ETV5",   tau: 3.572, cent: 0.059, scenic: 0.000, persist: 0.578, group: "Master", note: "Adult AT2 Maintenance" },
+        { tf: "MYRF",   tau: 2.656, cent: 0.046, scenic: 0.000, persist: 0.735, group: "Master", note: "Adult AT1 Identity" },
+        { tf: "NR3C2",  tau: 1.876, cent: 0.137, scenic: 0.000, persist: 0.773, group: "Effector", note: "Homeostatic Steroid Lock" },
+        { tf: "EHF",    tau: 1.709, cent: 0.110, scenic: 0.002, persist: 0.599, group: "Effector", note: "Adult RAS / AT2 Bridge" },
+        { tf: "NKX2-1", tau: 1.251, cent: 0.073, scenic: 0.000, persist: 0.625, group: "Effector", note: "ATAC-Rescued Pan-Lung" },
+        { tf: "TEAD1",  tau: 1.680, cent: 0.068, scenic: 0.000, persist: 0.676, group: "Effector", note: "ATAC-Rescued AT1" },
+        { tf: "SOX9",   tau: 1.000, cent: 0.000, scenic: 0.000, persist: 0.375, group: "Effector", note: "Silenced in Adult T4 (0 tgs)" },
+        { tf: "DDIT3",  tau: 2.716, cent: 0.146, scenic: 0.000, persist: 0.760, group: "Stress", note: "Adult UPR Stress" }
+      ]
+    };
+
+    const Q2_DATA = [
+      { tf: "NKX2-1", at2: 0.30, at1: 0.30, club: 0.40, persist: 0.625, prog: "Pan-Lung Core (4/4)", tau: 2.54 },
+      { tf: "FOXP1",  at2: 0.36, at1: 0.37, club: 0.27, persist: 0.632, prog: "Pan-Lung Core (4/4)", tau: 2.57 },
+      { tf: "KLF6",   at2: 0.29, at1: 0.37, club: 0.34, persist: 0.793, prog: "Pan-Lung Core (4/4)", tau: 3.11 },
+      { tf: "ELF3",   at2: 0.33, at1: 0.29, club: 0.38, persist: 0.748, prog: "Pan-Lung Core (4/4)", tau: 2.88 },
+      { tf: "STAT3",  at2: 0.35, at1: 0.29, club: 0.36, persist: 0.676, prog: "Pan-Lung Core (4/4)", tau: 2.68 },
+      { tf: "ETV5",   at2: 0.57, at1: 0.26, club: 0.17, persist: 0.578, prog: "Tip → AT2 Bridge (4/4)", tau: 3.10 },
+      { tf: "TFCP2L1",at2: 0.54, at1: 0.44, club: 0.02, persist: 0.375, prog: "AT2 Identity (Conserved)", tau: 3.11 },
+      { tf: "CEBPD",  at2: 0.53, at1: 0.26, club: 0.21, persist: 0.769, prog: "AT2 Quiescence Lock (4/4)", tau: 2.92 },
+      { tf: "CEBPA",  at2: 0.51, at1: 0.31, club: 0.18, persist: 0.375, prog: "AT2 Surfactant Lock", tau: 2.48 },
+      { tf: "HOPX",   at2: 0.27, at1: 0.50, club: 0.24, persist: 0.898, prog: "AT1 Co-Regulator (4/4)", tau: 3.32 },
+      { tf: "MYRF",   at2: 0.24, at1: 0.47, club: 0.30, persist: 0.735, prog: "AT1 Identity (4/4)", tau: 2.73 },
+      { tf: "TEAD1",  at2: 0.31, at1: 0.42, club: 0.28, persist: 0.676, prog: "AT1 Identity (4/4)", tau: 2.42 },
+      { tf: "SPDEF",  at2: 0.00, at1: 0.00, club: 1.00, persist: 0.250, prog: "Club / Goblet (47/0/0)", tau: 2.33 },
+      { tf: "SOX2",   at2: 0.10, at1: 0.11, club: 0.79, persist: 0.375, prog: "Club / Proximal", tau: 2.76 },
+      { tf: "EHF",    at2: 0.37, at1: 0.28, club: 0.35, persist: 0.599, prog: "Human RAS ↔ AT2 Bridge", tau: 2.48 }
+    ];
+
+    const REPROG_DATA = [
+      { name: "LungTF_Optimal_Tip (Empirical)", tipGain: 0.467, recovery: 0.930, gapClosed: 0.214, offtarget: 0.002 },
+      { name: "SKM (No OCT4, Layer 1 GRN)",     tipGain: -0.015, recovery: 0.080, gapClosed: 0.017, offtarget: 0.475 },
+      { name: "Partial OSKM (45% Dose)",        tipGain: -0.018, recovery: 0.027, gapClosed: 0.006, offtarget: 0.476 },
+      { name: "Sustained Full OSKM (Layer 2)",  tipGain: -0.019, recovery: 0.093, gapClosed: 0.008, offtarget: 1.256 }
+    ];
+
+    let mode = "q1";
+    let epoch = "T1";
+    let hitPoints = [];
+    let selectedIdx = 0;
+
+    const canvas = document.getElementById("main-canvas");
+    const ctx = canvas.getContext("2d");
+
+    function getThemeColors() {
+      const s = getComputedStyle(document.documentElement);
+      return {
+        fg: s.getPropertyValue("--foreground").trim() || "#1f2937",
+        muted: s.getPropertyValue("--muted-foreground").trim() || "#6b7280",
+        border: s.getPropertyValue("--card-border").trim() || "rgba(128,128,128,0.25)",
+        c1: s.getPropertyValue("--chart-1").trim() || "#d95f02",
+        c2: s.getPropertyValue("--chart-2").trim() || "#2b8cbe",
+        c3: s.getPropertyValue("--chart-3").trim() || "#1b9e77",
+        c4: s.getPropertyValue("--chart-4").trim() || "#e6ab02",
+        err: s.getPropertyValue("--error").trim() || "#dc2626",
+        ok: s.getPropertyValue("--success").trim() || "#16a34a"
+      };
+    }
+
+    function updateReadout(item) {
+      if (!item) return;
+      if (mode === "q1") {
+        document.getElementById("ro-tf").textContent = `${item.tf} (${item.note})`;
+        document.getElementById("ro-lag").textContent = item.cent > 0 ? `τ = ${item.tau.toFixed(2)} (${item.tau >= 2.65 ? "Long-Lag" : "Short-Lag"})` : "Silenced (0 targets)";
+        document.getElementById("ro-cent").textContent = `${item.cent.toFixed(3)} vs ${item.scenic.toFixed(3)}`;
+        document.getElementById("ro-pers").textContent = item.persist > 0 ? `Persist = ${item.persist.toFixed(3)}` : "Filtered Artifact";
+      } else if (mode === "q2") {
+        document.getElementById("ro-tf").textContent = `${item.tf} (${item.prog})`;
+        document.getElementById("ro-lag").textContent = `Mean τ = ${item.tau.toFixed(2)} steps`;
+        document.getElementById("ro-cent").textContent = `AT2:${item.at2.toFixed(2)} AT1:${item.at1.toFixed(2)} Club:${item.club.toFixed(2)}`;
+        document.getElementById("ro-pers").textContent = `Persist = ${item.persist.toFixed(3)}`;
+      } else {
+        document.getElementById("ro-tf").textContent = item.name;
+        document.getElementById("ro-lag").textContent = `Tip ΔCos = ${item.tipGain >= 0 ? "+" : ""}${item.tipGain.toFixed(3)}`;
+        document.getElementById("ro-cent").textContent = `Focal ${(item.recovery * 100).toFixed(1)}% | Global ${(item.gapClosed * 100).toFixed(1)}%`;
+        document.getElementById("ro-pers").textContent = `Off-Target = ${item.offtarget.toFixed(3)}`;
+      }
+    }
+
+    function draw() {
+      const dpr = window.devicePixelRatio || 1;
+      const w = canvas.clientWidth || 640;
+      const h = 215;
+      canvas.width = w * dpr;
+      canvas.height = h * dpr;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.clearRect(0, 0, w, h);
+
+      const tc = getThemeColors();
+      hitPoints = [];
+
+      if (mode === "q1") {
+        const rows = Q1_DATA[epoch];
+        const padL = 46, padR = 20, padT = 16, padB = 30;
+        const pw = w - padL - padR, ph = h - padT - padB;
+
+        ctx.strokeStyle = tc.border;
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(padL, padT); ctx.lineTo(padL, h - padB); ctx.lineTo(w - padR, h - padB);
+        ctx.stroke();
+
+        const tx = padL + ((2.65 - 1.0) / 3.4) * pw;
+        ctx.setLineDash([4, 4]);
+        ctx.strokeStyle = tc.muted;
+        ctx.beginPath(); ctx.moveTo(tx, padT); ctx.lineTo(tx, h - padB); ctx.stroke();
+        ctx.setLineDash([]);
+
+        ctx.fillStyle = tc.muted;
+        ctx.font = "11px sans-serif";
+        ctx.fillText("Short-Lag Effectors (τ < 2.65)", padL + 8, padT + 11);
+        ctx.fillText("Long-Lag Master Pioneers (τ ≥ 2.65)", tx + 8, padT + 11);
+        ctx.fillText("Effective Regulatory Lag τ (Steps 1–4.4)", w / 2 - 90, h - 6);
+
+        rows.forEach((r, idx) => {
+          const x = padL + Math.max(0.02, Math.min(0.97, (r.tau - 1.0) / 3.4)) * pw;
+          const y = (h - padB) - Math.max(0.03, Math.min(0.95, r.cent / 0.88)) * ph;
+          const col = r.group === "Master" ? tc.c1 : (r.group === "Artifact" ? tc.err : (r.group === "Stress" ? tc.c4 : tc.c2));
+          ctx.beginPath();
+          ctx.arc(x, y, idx === selectedIdx ? 7.5 : 5.5, 0, Math.PI * 2);
+          ctx.fillStyle = col;
+          ctx.fill();
+          if (idx === selectedIdx) {
+            ctx.lineWidth = 2; ctx.strokeStyle = tc.fg; ctx.stroke();
+          }
+          ctx.fillStyle = tc.fg;
+          ctx.font = idx === selectedIdx ? "bold 11px sans-serif" : "10.5px sans-serif";
+          ctx.fillText(r.tf, x + 8, y + 3.5);
+          hitPoints.push({ x, y, item: r, idx });
+        });
+        updateReadout(rows[Math.min(selectedIdx, rows.length - 1)]);
+      } else if (mode === "q2") {
+        const padL = 68, padR = 78, padT = 14, padB = 22;
+        const pw = w - padL - padR, ph = h - padT - padB;
+        const rowH = ph / Q2_DATA.length;
+
+        Q2_DATA.forEach((r, idx) => {
+          const y = padT + idx * rowH;
+          const bh = Math.max(6, rowH - 3.5);
+          const w1 = r.at2 * pw, w2 = r.at1 * pw, w3 = r.club * pw;
+          ctx.fillStyle = tc.ok; ctx.fillRect(padL, y, w1, bh);
+          ctx.fillStyle = tc.c2; ctx.fillRect(padL + w1, y, w2, bh);
+          ctx.fillStyle = tc.c4; ctx.fillRect(padL + w1 + w2, y, w3, bh);
+          if (idx === selectedIdx) {
+            ctx.strokeStyle = tc.fg; ctx.lineWidth = 1.5;
+            ctx.strokeRect(padL - 1, y - 0.5, pw + 2, bh + 1);
+          }
+          ctx.fillStyle = tc.fg;
+          ctx.font = idx === selectedIdx ? "bold 10.5px sans-serif" : "10px sans-serif";
+          ctx.fillText(r.tf, 6, y + bh - 1);
+          ctx.fillStyle = tc.muted;
+          ctx.fillText(`P=${r.persist.toFixed(2)}`, w - padR + 8, y + bh - 1);
+          hitPoints.push({ x: padL + pw / 2, y: y + bh / 2, ry: [y, y + rowH], item: r, idx });
+        });
+        ctx.fillStyle = tc.muted;
+        ctx.font = "11px sans-serif";
+        ctx.fillText("Green: AT2 Identity  |  Blue: AT1 Identity  |  Amber: Club / RAS Specificity", padL, h - 4);
+        updateReadout(Q2_DATA[Math.min(selectedIdx, Q2_DATA.length - 1)]);
+      } else {
+        const padL = 205, padR = 24, padT = 16, padB = 26;
+        const pw = w - padL - padR, ph = h - padT - padB;
+        const rowH = ph / REPROG_DATA.length;
+        REPROG_DATA.forEach((r, idx) => {
+          const y = padT + idx * rowH + 4;
+          const bh = 13;
+          const recW = Math.max(3, r.recovery * pw * 0.74);
+          const offW = Math.max(3, Math.min(1.0, r.offtarget / 1.3) * pw * 0.74);
+          ctx.fillStyle = tc.fg;
+          ctx.font = idx === selectedIdx ? "bold 11px sans-serif" : "11px sans-serif";
+          ctx.fillText(r.name, 6, y + 11);
+
+          ctx.fillStyle = tc.ok;
+          ctx.fillRect(padL, y, recW, bh);
+          ctx.fillStyle = tc.err;
+          ctx.fillRect(padL, y + bh + 3, offW, bh);
+
+          ctx.fillStyle = tc.muted;
+          ctx.font = "10.5px sans-serif";
+          ctx.fillText(`${(r.recovery * 100).toFixed(0)}% Focal (${(r.gapClosed * 100).toFixed(1)}% Global)`, padL + recW + 6, y + 10);
+          ctx.fillText(`Off-tgt ${r.offtarget.toFixed(3)}`, padL + offW + 6, y + bh + 13);
+          hitPoints.push({ x: padL + 60, y: y + bh, ry: [y - 2, y + 32], item: r, idx });
+        });
+        ctx.fillStyle = tc.muted;
+        ctx.font = "11px sans-serif";
+        ctx.fillText("Green: Focal Tip-Marker Recovery (Global Gap %)  |  Red: Off-Target Squamous/Teratoma Burden", 6, h - 5);
+        updateReadout(REPROG_DATA[Math.min(selectedIdx, REPROG_DATA.length - 1)]);
+      }
+    }
+
+    canvas.addEventListener("mousemove", (e) => {
+      const rect = canvas.getBoundingClientRect();
+      const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+      let best = null, bestD = 9999;
+      hitPoints.forEach((hp) => {
+        if (hp.ry) {
+          if (my >= hp.ry[0] && my <= hp.ry[1]) { best = hp; bestD = 0; }
+        } else {
+          const d = Math.hypot(mx - hp.x, my - hp.y);
+          if (d < 28 && d < bestD) { best = hp; bestD = d; }
+        }
+      });
+      if (best && best.idx !== selectedIdx) {
+        selectedIdx = best.idx;
+        draw();
+      }
+    });
+
+    ["tab-q1", "tab-q2", "tab-reprog"].forEach((id) => {
+      document.getElementById(id).addEventListener("click", (ev) => {
+        mode = ev.currentTarget.dataset.mode;
+        selectedIdx = 0;
+        document.getElementById("sub-controls").style.display = mode === "q1" ? "flex" : "none";
+        ["tab-q1", "tab-q2", "tab-reprog"].forEach((bid) => {
+          const btn = document.getElementById(bid);
+          const active = btn.dataset.mode === mode;
+          btn.className = active
+            ? "px-2.5 py-1 rounded border border-[var(--border)] bg-[var(--primary)] text-[var(--primary-foreground)] font-medium transition-colors"
+            : "px-2.5 py-1 rounded border border-[var(--border)] bg-[var(--card)] text-[var(--muted-foreground)] hover:text-[var(--foreground)] transition-colors";
+        });
+        draw();
+      });
+    });
+
+    document.getElementById("epoch-select").addEventListener("change", (ev) => {
+      epoch = ev.target.value;
+      selectedIdx = 0;
+      draw();
+    });
+
+    window.addEventListener("resize", draw);
+    window.addEventListener("themechange", draw);
+    draw();
+  </script>
+</body>
+</html>

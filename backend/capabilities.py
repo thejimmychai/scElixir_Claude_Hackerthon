@@ -54,6 +54,14 @@ ENGINES: Dict[str, Dict[str, Any]] = {
         "notes": ["cisTarget hg38 database (~47 GB)", "matched scATAC for the layer"],
         "hardware": "GPU host (RTX 4090 class) with the cisTarget database",
     },
+    "scmagnify": {
+        "label": "scMagnify multi-scale dynamic Granger eGRN + Tucker RegFactors (Docker CPU/GPU)",
+        "stages": ["C", "D"],
+        "modules": ["scmagnify", "torch", "cellrank", "decoupler", "tensorly"],
+        "inputs": ["{organ}/{layer}_multiome.h5mu"],
+        "notes": ["Docker image scmagnify-scelixir:1.0 + HOCOMOCOv11 / Zenodo 17440841 cache"],
+        "hardware": "Docker CPU (<= 5 min trajectory) or Cloud Run GPU / Gemini Interactions API",
+    },
     "pertformer": {
         "label": "PertFormer DNA+ATAC fate inference (GPU)",
         "stages": ["F"],
@@ -161,7 +169,7 @@ def requirements(
         return []
     rep = engine_report()
     engines = [name for name, spec in ENGINES.items() if stage in spec["stages"]]
-    if stage == "C" and route in ("scenicplus", "celloracle"):
+    if stage == "C" and route in ("scenicplus", "celloracle", "scmagnify"):
         engines = [route]
 
     items: List[str] = []
